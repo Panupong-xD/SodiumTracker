@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -9,21 +9,21 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
-} from 'react-native';
-import { Picker } from '@react-native-picker/picker';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { getProfileData, saveProfileData } from '../utils/storage';
-import { calculateRecommendedSodium } from '../utils/sodiumCalculator';
-import colors from '../constants/colors';
+} from "react-native";
+import { Picker } from "@react-native-picker/picker";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { getProfileData, saveProfileData } from "../utils/storage";
+import { calculateRecommendedSodium } from "../utils/sodiumCalculator";
+import colors from "../constants/colors";
 
 const ProfileScreen = () => {
   const [profile, setProfile] = useState({
-    name: '',
-    age: '',
-    weight: '',
-    height: '',
-    kidneyStage: '1',
-    gender: 'male',
+    name: "",
+    age: "",
+    weight: "",
+    height: "",
+    kidneyStage: "1",
+    gender: "male",
   });
 
   const [recommendedSodium, setRecommendedSodium] = useState(null);
@@ -53,47 +53,67 @@ const ProfileScreen = () => {
 
   const validateForm = () => {
     if (!profile.name.trim()) {
-      Alert.alert('กรุณาระบุชื่อ');
+      Alert.alert("กรุณาระบุชื่อ");
       return false;
     }
-    
-    if (!profile.age || isNaN(profile.age) || parseInt(profile.age) <= 0 || parseInt(profile.age) > 120) {
-      Alert.alert('กรุณาระบุอายุที่ถูกต้อง (1-120 ปี)');
+
+    if (
+      !profile.age ||
+      isNaN(profile.age) ||
+      parseInt(profile.age) <= 0 ||
+      parseInt(profile.age) > 120
+    ) {
+      Alert.alert("กรุณาระบุอายุที่ถูกต้อง (1-120 ปี)");
       return false;
     }
-    
-    if (!profile.weight || isNaN(profile.weight) || parseFloat(profile.weight) <= 0 || parseFloat(profile.weight) > 300) {
-      Alert.alert('กรุณาระบุน้ำหนักที่ถูกต้อง (1-300 กก.)');
+
+    if (
+      !profile.weight ||
+      isNaN(profile.weight) ||
+      parseFloat(profile.weight) <= 0 ||
+      parseFloat(profile.weight) > 300
+    ) {
+      Alert.alert("กรุณาระบุน้ำหนักที่ถูกต้อง (1-300 กก.)");
       return false;
     }
-    
-    if (!profile.height || isNaN(profile.height) || parseInt(profile.height) <= 0 || parseInt(profile.height) > 250) {
-      Alert.alert('กรุณาระบุส่วนสูงที่ถูกต้อง (1-250 ซม.)');
+
+    if (
+      !profile.height ||
+      isNaN(profile.height) ||
+      parseInt(profile.height) <= 0 ||
+      parseInt(profile.height) > 250
+    ) {
+      Alert.alert("กรุณาระบุส่วนสูงที่ถูกต้อง (1-250 ซม.)");
       return false;
     }
-    
+
     return true;
   };
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
-    
+
     try {
-      await saveProfileData(profile);
       const sodium = calculateRecommendedSodium(profile);
+
+      const updatedProfile = {
+        ...profile,
+        recommendedSodium: sodium, // เพิ่ม recommendedSodium เข้าไป!
+      };
+      await saveProfileData(updatedProfile);
       setRecommendedSodium(sodium);
       setFormSubmitted(true);
-      Alert.alert('บันทึกข้อมูลสำเร็จ');
+      Alert.alert("บันทึกข้อมูลสำเร็จ");
     } catch (error) {
-      console.error('Error saving profile:', error);
-      Alert.alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+      console.error("Error saving profile:", error);
+      Alert.alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardAvoidContainer}
       >
         <ScrollView style={styles.scrollView}>
@@ -110,7 +130,7 @@ const ProfileScreen = () => {
               <TextInput
                 style={styles.input}
                 value={profile.name}
-                onChangeText={(text) => handleInputChange('name', text)}
+                onChangeText={(text) => handleInputChange("name", text)}
                 placeholder="กรุณาระบุชื่อ"
               />
             </View>
@@ -121,7 +141,7 @@ const ProfileScreen = () => {
                 <TextInput
                   style={styles.input}
                   value={profile.age}
-                  onChangeText={(text) => handleInputChange('age', text)}
+                  onChangeText={(text) => handleInputChange("age", text)}
                   keyboardType="numeric"
                   placeholder="อายุ"
                 />
@@ -132,7 +152,9 @@ const ProfileScreen = () => {
                 <View style={styles.pickerContainer}>
                   <Picker
                     selectedValue={profile.gender}
-                    onValueChange={(value) => handleInputChange('gender', value)}
+                    onValueChange={(value) =>
+                      handleInputChange("gender", value)
+                    }
                     style={styles.picker}
                   >
                     <Picker.Item label="ชาย" value="male" />
@@ -148,7 +170,7 @@ const ProfileScreen = () => {
                 <TextInput
                   style={styles.input}
                   value={profile.weight}
-                  onChangeText={(text) => handleInputChange('weight', text)}
+                  onChangeText={(text) => handleInputChange("weight", text)}
                   keyboardType="numeric"
                   placeholder="น้ำหนัก"
                 />
@@ -159,7 +181,7 @@ const ProfileScreen = () => {
                 <TextInput
                   style={styles.input}
                   value={profile.height}
-                  onChangeText={(text) => handleInputChange('height', text)}
+                  onChangeText={(text) => handleInputChange("height", text)}
                   keyboardType="numeric"
                   placeholder="ส่วนสูง"
                 />
@@ -171,7 +193,9 @@ const ProfileScreen = () => {
               <View style={styles.pickerContainer}>
                 <Picker
                   selectedValue={profile.kidneyStage}
-                  onValueChange={(value) => handleInputChange('kidneyStage', value)}
+                  onValueChange={(value) =>
+                    handleInputChange("kidneyStage", value)
+                  }
                   style={styles.picker}
                 >
                   <Picker.Item label="ระยะที่ 1" value="1" />
@@ -194,13 +218,16 @@ const ProfileScreen = () => {
 
           {formSubmitted && recommendedSodium && (
             <View style={styles.resultContainer}>
-              <Text style={styles.resultHeader}>ปริมาณโซเดียมที่แนะนำต่อวัน</Text>
+              <Text style={styles.resultHeader}>
+                ปริมาณโซเดียมที่แนะนำต่อวัน
+              </Text>
               <View style={styles.resultBox}>
                 <Text style={styles.resultValue}>{recommendedSodium}</Text>
                 <Text style={styles.resultUnit}>มิลลิกรัม</Text>
               </View>
               <Text style={styles.resultDescription}>
-                ปริมาณโซเดียมที่แนะนำสำหรับคุณตามระยะโรคไตที่ {profile.kidneyStage}
+                ปริมาณโซเดียมที่แนะนำสำหรับคุณตามระยะโรคไตที่{" "}
+                {profile.kidneyStage}
               </Text>
             </View>
           )}
@@ -227,20 +254,20 @@ const styles = StyleSheet.create({
   },
   header: {
     fontSize: 24,
-    fontFamily: 'Kanit-Bold',
+    fontFamily: "Kanit-Bold",
     color: colors.textPrimary,
     marginBottom: 8,
   },
   subheader: {
     fontSize: 16,
-    fontFamily: 'Kanit-Regular',
+    fontFamily: "Kanit-Regular",
     color: colors.textSecondary,
   },
   form: {
     backgroundColor: colors.white,
     borderRadius: 12,
     padding: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -251,16 +278,16 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   formRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   halfWidth: {
-    width: '48%',
+    width: "48%",
   },
   label: {
     marginBottom: 8,
     fontSize: 16,
-    fontFamily: 'Kanit-Regular',
+    fontFamily: "Kanit-Regular",
     color: colors.textPrimary,
   },
   input: {
@@ -269,14 +296,14 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    fontFamily: 'Kanit-Regular',
+    fontFamily: "Kanit-Regular",
     color: colors.textPrimary,
   },
   pickerContainer: {
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 8,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   picker: {
     height: 50,
@@ -285,20 +312,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     borderRadius: 8,
     padding: 16,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 8,
   },
   submitButtonText: {
     color: colors.white,
     fontSize: 16,
-    fontFamily: 'Kanit-Bold',
+    fontFamily: "Kanit-Bold",
   },
   resultContainer: {
     backgroundColor: colors.white,
     borderRadius: 12,
     padding: 16,
-    alignItems: 'center',
-    shadowColor: '#000',
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -307,7 +334,7 @@ const styles = StyleSheet.create({
   },
   resultHeader: {
     fontSize: 18,
-    fontFamily: 'Kanit-Bold',
+    fontFamily: "Kanit-Bold",
     color: colors.textPrimary,
     marginBottom: 16,
   },
@@ -315,26 +342,26 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primaryLight,
     borderRadius: 8,
     padding: 16,
-    width: '100%',
-    alignItems: 'center',
+    width: "100%",
+    alignItems: "center",
     marginBottom: 16,
   },
   resultValue: {
     fontSize: 32,
-    fontFamily: 'Kanit-Bold',
+    fontFamily: "Kanit-Bold",
     color: colors.primary,
   },
   resultUnit: {
     fontSize: 16,
-    fontFamily: 'Kanit-Regular',
+    fontFamily: "Kanit-Regular",
     color: colors.primary,
     marginTop: 4,
   },
   resultDescription: {
     fontSize: 14,
-    fontFamily: 'Kanit-Regular',
+    fontFamily: "Kanit-Regular",
     color: colors.textSecondary,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });
 

@@ -11,13 +11,13 @@ const FoodItem = ({ food, onConsume }) => {
         <Text style={styles.foodName}>{food.name}</Text>
         <View style={styles.detailsContainer}>
           <View style={styles.sodiumContainer}>
-            <Ionicons name="salt-outline" size={16} color={colors.textSecondary} />
+            <Ionicons name="cube-outline" size={16} color={colors.textSecondary} />
             <Text style={styles.sodiumText}>{formatSodiumAmount(food.sodium)}</Text>
           </View>
           
           {food.category && (
             <View style={styles.categoryContainer}>
-              <Ionicons name="pricetag-outline" size={16} color={colors.textSecondary} />
+              <Ionicons name="pricetag-outline" size={16}   color={colors.textSecondary} />
               <Text style={styles.categoryText}>{food.category}</Text>
             </View>
           )}

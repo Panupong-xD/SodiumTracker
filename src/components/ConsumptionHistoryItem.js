@@ -23,7 +23,7 @@ const ConsumptionHistoryItem = ({ item }) => {
         <Text style={styles.foodName}>{item.foodName}</Text>
         <View style={styles.detailsRow}>
           <View style={styles.sodiumContainer}>
-            <Ionicons name="salt-outline" size={16} color={colors.textSecondary} />
+            <Ionicons name="cube-outline" size={16} color={colors.textSecondary} />
             <Text style={styles.sodiumText}>{formatSodiumAmount(item.sodiumAmount)}</Text>
           </View>
           
