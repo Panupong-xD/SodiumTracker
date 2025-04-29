@@ -11,29 +11,60 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   Alert,
+  Image,
 } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import colors from '../constants/colors';
 
 const AddFoodModal = ({ visible, onClose, onAddFood }) => {
   const [foodName, setFoodName] = useState('');
   const [sodiumAmount, setSodiumAmount] = useState('');
-  const [category, setCategory] = useState('อาหารจานเดียว');
+  const [image, setImage] = useState(null); // เก็บ URI ของภาพที่เลือก
 
-  const categories = [
-    'อาหารจานเดียว',
-    'อาหารไทย',
-    'อาหารว่าง',
-    'อาหารสำเร็จรูป',
-    'ฟาสต์ฟู้ด',
-    'เครื่องดื่ม',
-    'ซุป',
-    'โปรตีน',
-    'ผัก',
-    'เครื่องเคียง',
-    'อื่นๆ',
-  ];
+  // ฟังก์ชันสำหรับเลือกภาพจากแกลเลอรี่
+  const pickImage = async () => {
+    // ขออนุญาตเข้าถึงแกลเลอรี่
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      Alert.alert('ต้องให้สิทธิ์', 'กรุณาให้สิทธิ์ในการเข้าถึงแกลเลอรี่เพื่อเลือกภาพ');
+      return;
+    }
+
+    // เปิดแกลเลอรี่ให้ผู้ใช้เลือกภาพ
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setImage(result.assets[0].uri); // เก็บ URI ของภาพ
+    }
+  };
+
+  // ฟังก์ชันสำหรับถ่ายภาพใหม่
+  const takePhoto = async () => {
+    // ขออนุญาตเข้าถึงกล้อง
+    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permissionResult.granted) {
+      Alert.alert('ต้องให้สิทธิ์', 'กรุณาให้สิทธิ์ในการเข้าถึงกล้องเพื่อถ่ายภาพ');
+      return;
+    }
+
+    // เปิดกล้องให้ผู้ใช้ถ่ายภาพ
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setImage(result.assets[0].uri); // เก็บ URI ของภาพ
+    }
+  };
 
   const handleSubmit = () => {
     // Validate inputs
@@ -47,11 +78,17 @@ const AddFoodModal = ({ visible, onClose, onAddFood }) => {
       return;
     }
 
+    if (!image) {
+      Alert.alert('กรุณาเลือกภาพ');
+      return;
+    }
+
     // Create new food item
     const newFood = {
       name: foodName.trim(),
       sodium: Number(sodiumAmount),
-      category,
+      image, // ใช้ URI ของภาพที่เลือก
+      isCustom: true, // เพิ่ม flag เพื่อระบุว่าเป็นเมนูที่ผู้ใช้เพิ่ม
     };
 
     // Pass to parent component
@@ -60,7 +97,7 @@ const AddFoodModal = ({ visible, onClose, onAddFood }) => {
     // Reset form
     setFoodName('');
     setSodiumAmount('');
-    setCategory('อาหารจานเดียว');
+    setImage(null);
   };
 
   return (
@@ -107,18 +144,18 @@ const AddFoodModal = ({ visible, onClose, onAddFood }) => {
                 </View>
 
                 <View style={styles.formGroup}>
-                  <Text style={styles.label}>หมวดหมู่</Text>
-                  <View style={styles.pickerContainer}>
-                    <Picker
-                      selectedValue={category}
-                      onValueChange={(value) => setCategory(value)}
-                      style={styles.picker}
-                    >
-                      {categories.map((cat) => (
-                        <Picker.Item key={cat} label={cat} value={cat} />
-                      ))}
-                    </Picker>
+                  <Text style={styles.label}>เลือกภาพ</Text>
+                  <View style={styles.imagePickerContainer}>
+                    <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
+                      <Text style={styles.imageButtonText}>เลือกจากแกลเลอรี่</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.imageButton} onPress={takePhoto}>
+                      <Text style={styles.imageButtonText}>ถ่ายภาพ</Text>
+                    </TouchableOpacity>
                   </View>
+                  {image && (
+                    <Image source={{ uri: image }} style={styles.previewImage} />
+                  )}
                 </View>
 
                 <TouchableOpacity
@@ -196,14 +233,29 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Kanit-Regular',
   },
-  pickerContainer: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    overflow: 'hidden',
+  imagePickerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
   },
-  picker: {
-    height: 50,
+  imageButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+    padding: 10,
+    alignItems: 'center',
+    flex: 1,
+    marginHorizontal: 5,
+  },
+  imageButtonText: {
+    color: colors.white,
+    fontSize: 14,
+    fontFamily: 'Kanit-Regular',
+  },
+  previewImage: {
+    width: '100%',
+    height: 100,
+    borderRadius: 8,
+    marginTop: 8,
   },
   addButton: {
     backgroundColor: colors.primary,

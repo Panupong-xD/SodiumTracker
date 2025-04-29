@@ -22,7 +22,10 @@ import {
 import colors from '../constants/colors';
 
 // โหลดข้อมูลจาก initialFoods.json
-const initialFoods = require('../data/initialFoods.json');
+const initialFoods = require('../data/initialFoods.json').map(item => ({
+  ...item,
+  isCustom: false, // เพิ่ม flag เพื่อระบุว่าเป็นเมนูเริ่มต้น
+}));
 
 const MenuScreen = () => {
   const [foodItems, setFoodItems] = useState([]);
@@ -42,7 +45,6 @@ const MenuScreen = () => {
           // ตรวจสอบและเพิ่ม image ถ้าขาดหาย (สำหรับข้อมูลเก่า)
           updatedFoodItems = savedFoodItems.map(item => {
             if (!item.image) {
-              // หา image จาก initialFoods ตาม id
               const matchingInitialFood = initialFoods.find(initialItem => initialItem.id === item.id);
               return {
                 ...item,
@@ -51,7 +53,6 @@ const MenuScreen = () => {
             }
             return item;
           });
-          console.log('Loaded foodItems from storage:', updatedFoodItems);
           setFoodItems(updatedFoodItems);
           setFilteredItems(updatedFoodItems);
         } else {
@@ -87,15 +88,38 @@ const MenuScreen = () => {
 
   const handleAddFood = async (newFood) => {
     try {
-      // เก็บ image ไว้ใน newFood
       const updatedFoodItems = [...foodItems, { ...newFood, id: Date.now().toString() }];
-      console.log('Adding new food:', updatedFoodItems);
       setFoodItems(updatedFoodItems);
       await saveFoodItems(updatedFoodItems);
       setIsAddModalVisible(false);
     } catch (error) {
       Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถเพิ่มรายการอาหารได้');
     }
+  };
+
+  const handleDeleteFood = async (foodId) => {
+    Alert.alert(
+      'ยืนยันการลบ',
+      'คุณแน่ใจหรือไม่ว่าต้องการลบเมนูนี้?',
+      [
+        { text: 'ยกเลิก', style: 'cancel' },
+        {
+          text: 'ลบ',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const updatedFoodItems = foodItems.filter(item => item.id !== foodId);
+              setFoodItems(updatedFoodItems);
+              setFilteredItems(updatedFoodItems);
+              await saveFoodItems(updatedFoodItems);
+              Alert.alert('สำเร็จ', 'ลบเมนูเรียบร้อยแล้ว');
+            } catch (error) {
+              Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถลบเมนูได้');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleConsume = async (food) => {
@@ -148,7 +172,11 @@ const MenuScreen = () => {
             numColumns={2}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <FoodItem food={item} onConsume={() => handleConsume(item)} />
+              <FoodItem
+                food={item}
+                onConsume={() => handleConsume(item)}
+                onDelete={item.isCustom ? () => handleDeleteFood(item.id) : null} // ส่ง onDelete เฉพาะเมนูที่เพิ่มโดยผู้ใช้
+              />
             )}
             columnWrapperStyle={styles.gridRow}
             contentContainerStyle={{ paddingBottom: 80 }}

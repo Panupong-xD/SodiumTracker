@@ -4,15 +4,21 @@ import { Ionicons } from '@expo/vector-icons';
 import { formatSodiumAmount } from '../utils/sodiumCalculator';
 import colors from '../constants/colors';
 
-const FoodItem = ({ food, onConsume }) => {
+const FoodItem = ({ food, onConsume, onDelete }) => {
   // Mapping ชื่อไฟล์รูปภาพเป็นผลลัพธ์ของ require
   const imageMap = {
     'food1.jpg': require('../../assets/images/food1.jpg'),
     'food2.jpg': require('../../assets/images/food2.jpg'),
   };
 
-  // เลือกรูปภาพจาก imageMap ถ้า food.image ไม่มีหรือไม่พบใน imageMap ให้ใช้ food1.jpg
-  const imageSource = food.image && imageMap[food.image] ? imageMap[food.image] : imageMap['food1.jpg'];
+  // ถ้า food.image เป็น URI (จากผู้ใช้เลือก) ให้ใช้ URI โดยตรง
+  // ถ้า food.image เป็นชื่อไฟล์ (จาก initialFoods) ให้ใช้ imageMap
+  let imageSource;
+  if (food.image && food.image.startsWith('file://')) {
+    imageSource = { uri: food.image };
+  } else {
+    imageSource = food.image && imageMap[food.image] ? imageMap[food.image] : imageMap['food1.jpg'];
+  }
 
   return (
     <View style={styles.container}>
@@ -21,10 +27,18 @@ const FoodItem = ({ food, onConsume }) => {
       <Text style={styles.foodName}>{food.name}</Text>
       <Text style={styles.sodiumText}>{formatSodiumAmount(food.sodium)}</Text>
 
-      <TouchableOpacity style={styles.consumeButton} onPress={onConsume}>
-        <Text style={styles.consumeButtonText}>บันทึก</Text>
-        <Ionicons name="add-circle-outline" size={16} color={colors.white} />
-      </TouchableOpacity>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.consumeButton} onPress={onConsume}>
+          <Text style={styles.consumeButtonText}>บันทึก</Text>
+          <Ionicons name="add-circle-outline" size={16} color={colors.white} />
+        </TouchableOpacity>
+
+        {onDelete && (
+          <TouchableOpacity style={styles.deleteButton} onPress={onDelete}>
+            <Ionicons name="trash-outline" size={16} color={colors.white} />
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 };
@@ -61,6 +75,12 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginBottom: 8,
   },
+  buttonContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
   consumeButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -74,6 +94,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Kanit-Regular',
     marginRight: 4,
+  },
+  deleteButton: {
+    backgroundColor: colors.danger,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
   },
 });
 
