@@ -140,7 +140,7 @@ export default function DashboardScreen() {
       } else {
         setAverageSodium(null);
       }
-    } else {
+    } else if (period === 'yearly') {
       const year = new Date().getFullYear();
       const monthNames = [
         'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
@@ -153,13 +153,24 @@ export default function DashboardScreen() {
       });
       labels = monthNames;
       dataPoints = yearData;
-
-      // คำนวณค่าเฉลี่ยโซเดียมต่อเดือน (เฉพาะเดือนที่บันทึก)
-      const recordedMonths = yearData.filter(value => value > 0);
-      if (recordedMonths.length > 0) {
-        const totalSodium = recordedMonths.reduce((sum, value) => sum + value, 0);
-        const average = Math.round(totalSodium / recordedMonths.length);
-        setAverageSodium({ type: 'monthly', value: average });
+    
+      // คำนวณค่าเฉลี่ยโซเดียมต่อวันของทั้งปี (เฉพาะวันที่บันทึก)
+      const recordedDays = dailyArray.filter(item => {
+        const [y] = item.date.split('-').map(Number);
+        return y === year && item.totalSodium > 0;
+      });
+    
+      if (recordedDays.length > 0) {
+        const totalSodium = recordedDays.reduce((sum, item) => sum + item.totalSodium, 0);
+        const averageDailySodium = totalSodium / recordedDays.length; // ค่าเฉลี่ยโซเดียมต่อวัน
+    
+        // คำนวณจำนวนวันเฉลี่ยต่อเดือนในปีนั้น
+        const daysInYear = new Date(year, 12, 0).getDate() === 31 ? 365 : 366; // ตรวจสอบว่าปีนั้นมี 365 หรือ 366 วัน
+        const averageDaysPerMonth = daysInYear / 12; // จำนวนวันเฉลี่ยต่อเดือน
+    
+        // ค่าเฉลี่ยโซเดียมต่อเดือน = ค่าเฉลี่ยต่อวัน * จำนวนวันเฉลี่ยต่อเดือน
+        const averageMonthlySodium = Math.round(averageDailySodium * averageDaysPerMonth);
+        setAverageSodium({ type: 'monthly', value: averageMonthlySodium });
       } else {
         setAverageSodium(null);
       }
@@ -295,7 +306,7 @@ export default function DashboardScreen() {
                     styles.periodButtonText,
                     period === p && styles.activePeriodButtonText
                   ]}>
-                    {p === 'weekly' ? 'รายสัปดาห์' : p === 'monthly' ? 'รายเดือน' : 'รายปี'}
+                    {p === 'weekly' ? '7 วันล่าสุด' : p === 'monthly' ? 'รายเดือน' : 'รายปี'}
                   </Text>
                 </TouchableOpacity>
               ))}
