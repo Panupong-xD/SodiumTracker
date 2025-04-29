@@ -13,15 +13,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import FoodItem from '../components/FoodItem';
 import AddFoodModal from '../components/AddFoodModal';
-import { 
-  getFoodItems, 
-  saveFoodItems, 
-  addConsumption, 
+import {
+  getFoodItems,
+  saveFoodItems,
+  addConsumption,
   getProfileData,
-  getConsumptionHistory
 } from '../utils/storage';
-import initialFoods from '../data/initialFoods';
 import colors from '../constants/colors';
+
+// โหลดข้อมูลจาก initialFoods.json
+const initialFoods = require('../data/initialFoods.json');
 
 const MenuScreen = () => {
   const [foodItems, setFoodItems] = useState([]);
@@ -34,21 +35,32 @@ const MenuScreen = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Load food items
         const savedFoodItems = await getFoodItems();
+        let updatedFoodItems = savedFoodItems;
+
         if (savedFoodItems && savedFoodItems.length > 0) {
-          setFoodItems(savedFoodItems);
-          setFilteredItems(savedFoodItems);
+          // ตรวจสอบและเพิ่ม image ถ้าขาดหาย (สำหรับข้อมูลเก่า)
+          updatedFoodItems = savedFoodItems.map(item => {
+            if (!item.image) {
+              // หา image จาก initialFoods ตาม id
+              const matchingInitialFood = initialFoods.find(initialItem => initialItem.id === item.id);
+              return {
+                ...item,
+                image: matchingInitialFood ? matchingInitialFood.image : 'food1.jpg',
+              };
+            }
+            return item;
+          });
+          console.log('Loaded foodItems from storage:', updatedFoodItems);
+          setFoodItems(updatedFoodItems);
+          setFilteredItems(updatedFoodItems);
         } else {
-          // If no saved food items, use initial data
+          console.log('Using initialFoods:', initialFoods);
           setFoodItems(initialFoods);
           setFilteredItems(initialFoods);
-          
-          // Save initial food items
           await saveFoodItems(initialFoods);
         }
-        
-        // Load profile data
+
         const profile = await getProfileData();
         setProfileData(profile);
       } catch (error) {
@@ -75,22 +87,17 @@ const MenuScreen = () => {
 
   const handleAddFood = async (newFood) => {
     try {
-      const profile = await getProfileData();
-      if (!profile || !profile.name) {
-        Alert.alert('ต้องตั้งค่าโปรไฟล์ก่อน', 'กรุณาตั้งค่าโปรไฟล์ของคุณที่หน้าโปรไฟล์ก่อนบันทึกเมนูอาหาร');
-        return;
-      }
-  
+      // เก็บ image ไว้ใน newFood
       const updatedFoodItems = [...foodItems, { ...newFood, id: Date.now().toString() }];
+      console.log('Adding new food:', updatedFoodItems);
       setFoodItems(updatedFoodItems);
       await saveFoodItems(updatedFoodItems);
       setIsAddModalVisible(false);
     } catch (error) {
-      console.error('Error adding food:', error);
       Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถเพิ่มรายการอาหารได้');
     }
   };
-  
+
   const handleConsume = async (food) => {
     if (!profileData) {
       Alert.alert(
@@ -109,11 +116,10 @@ const MenuScreen = () => {
         sodiumAmount: food.sodium,
         timestamp: new Date().toISOString(),
       };
-      
+
       await addConsumption(consumption);
       Alert.alert('บันทึกสำเร็จ', `บันทึกการบริโภค "${food.name}" เรียบร้อยแล้ว`);
     } catch (error) {
-      console.error('Error recording consumption:', error);
       Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถบันทึกการบริโภคได้');
     }
   };
@@ -139,26 +145,16 @@ const MenuScreen = () => {
         <>
           <FlatList
             data={filteredItems}
+            numColumns={2}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <FoodItem 
-                food={item} 
-                onConsume={() => handleConsume(item)} 
-              />
+              <FoodItem food={item} onConsume={() => handleConsume(item)} />
             )}
-            ListEmptyComponent={
-              <View style={styles.emptyContainer}>
-                <Ionicons name="restaurant-outline" size={60} color={colors.textSecondary} />
-                <Text style={styles.emptyText}>ไม่พบรายการอาหาร</Text>
-              </View>
-            }
-            contentContainerStyle={filteredItems.length === 0 ? { flex: 1 } : null}
+            columnWrapperStyle={styles.gridRow}
+            contentContainerStyle={{ paddingBottom: 80 }}
           />
 
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => setIsAddModalVisible(true)}
-          >
+          <TouchableOpacity style={styles.addButton} onPress={() => setIsAddModalVisible(true)}>
             <Ionicons name="add" size={28} color={colors.white} />
           </TouchableOpacity>
 
@@ -203,23 +199,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    marginTop: 10,
     fontSize: 16,
     fontFamily: 'Kanit-Regular',
     color: colors.textSecondary,
   },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  emptyText: {
-    marginTop: 16,
-    fontSize: 16,
-    fontFamily: 'Kanit-Regular',
-    color: colors.textSecondary,
-    textAlign: 'center',
+  gridRow: {
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
   },
   addButton: {
     position: 'absolute',
@@ -232,10 +218,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
   },
 });
 

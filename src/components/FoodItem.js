@@ -1,33 +1,27 @@
 import React from 'react';
-import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { formatSodiumAmount } from '../utils/sodiumCalculator';
 import colors from '../constants/colors';
 
 const FoodItem = ({ food, onConsume }) => {
+  // Mapping ชื่อไฟล์รูปภาพเป็นผลลัพธ์ของ require
+  const imageMap = {
+    'food1.jpg': require('../../assets/images/food1.jpg'),
+    'food2.jpg': require('../../assets/images/food2.jpg'),
+  };
+
+  // เลือกรูปภาพจาก imageMap ถ้า food.image ไม่มีหรือไม่พบใน imageMap ให้ใช้ food1.jpg
+  const imageSource = food.image && imageMap[food.image] ? imageMap[food.image] : imageMap['food1.jpg'];
+
   return (
     <View style={styles.container}>
-      <View style={styles.contentContainer}>
-        <Text style={styles.foodName}>{food.name}</Text>
-        <View style={styles.detailsContainer}>
-          <View style={styles.sodiumContainer}>
-            <Ionicons name="cube-outline" size={16} color={colors.textSecondary} />
-            <Text style={styles.sodiumText}>{formatSodiumAmount(food.sodium)}</Text>
-          </View>
-          
-          {food.category && (
-            <View style={styles.categoryContainer}>
-              <Ionicons name="pricetag-outline" size={16}   color={colors.textSecondary} />
-              <Text style={styles.categoryText}>{food.category}</Text>
-            </View>
-          )}
-        </View>
-      </View>
+      <Image source={imageSource} style={styles.foodImage} />
 
-      <TouchableOpacity
-        style={styles.consumeButton}
-        onPress={onConsume}
-      >
+      <Text style={styles.foodName}>{food.name}</Text>
+      <Text style={styles.sodiumText}>{formatSodiumAmount(food.sodium)}</Text>
+
+      <TouchableOpacity style={styles.consumeButton} onPress={onConsume}>
         <Text style={styles.consumeButtonText}>บันทึก</Text>
         <Ionicons name="add-circle-outline" size={16} color={colors.white} />
       </TouchableOpacity>
@@ -37,51 +31,35 @@ const FoodItem = ({ food, onConsume }) => {
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
+    width: '48%',
+    marginBottom: 16,
     backgroundColor: colors.white,
-    marginHorizontal: 16,
-    marginVertical: 6,
-    borderRadius: 8,
+    borderRadius: 12,
+    padding: 12,
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
-    padding: 12,
   },
-  contentContainer: {
-    flex: 1,
+  foodImage: {
+    width: '100%',
+    height: 100,
+    borderRadius: 8,
+    marginBottom: 8,
   },
   foodName: {
     fontSize: 16,
     fontFamily: 'Kanit-Regular',
     color: colors.textPrimary,
-    marginBottom: 4,
-  },
-  detailsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  sodiumContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 16,
+    textAlign: 'center',
   },
   sodiumText: {
-    marginLeft: 4,
     fontSize: 14,
     fontFamily: 'Kanit-Regular',
     color: colors.textSecondary,
-  },
-  categoryContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  categoryText: {
-    marginLeft: 4,
-    fontSize: 14,
-    fontFamily: 'Kanit-Regular',
-    color: colors.textSecondary,
+    marginBottom: 8,
   },
   consumeButton: {
     flexDirection: 'row',
@@ -90,7 +68,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
-    alignSelf: 'center',
   },
   consumeButtonText: {
     color: colors.white,
