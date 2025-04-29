@@ -26,6 +26,7 @@ export default function DashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState(null);
   const [dailyData, setDailyData] = useState(null);
+  const [averageSodium, setAverageSodium] = useState(null); // เก็บค่าเฉลี่ย
 
   const loadData = useCallback(async () => {
     try {
@@ -58,6 +59,7 @@ export default function DashboardScreen() {
     } else {
       setChartData({ labels: [], datasets: [{ data: [] }] });
       setDailyData(null);
+      setAverageSodium(null); // รีเซ็ตค่าเฉลี่ยเมื่อไม่มีข้อมูล
     }
   }, [consumptionData, period]);
 
@@ -90,6 +92,18 @@ export default function DashboardScreen() {
         return `${date.getDate()}/${date.getMonth() + 1}`;
       });
       dataPoints = last7.map(d => groupedByDay[d]?.totalSodium || 0);
+
+      // คำนวณค่าเฉลี่ยโซเดียมต่อวันใน 7 วันล่าสุด (เฉพาะวันที่บันทึก)
+      const recordedDays = last7
+        .map(date => dailyArray.find(item => item.date === date))
+        .filter(item => item && item.totalSodium > 0);
+      if (recordedDays.length > 0) {
+        const totalSodium = recordedDays.reduce((sum, item) => sum + item.totalSodium, 0);
+        const average = Math.round(totalSodium / recordedDays.length);
+        setAverageSodium({ type: 'daily', value: average });
+      } else {
+        setAverageSodium(null);
+      }
     } else if (period === 'monthly') {
       const currentMonth = new Date().getMonth();
       const currentYear = new Date().getFullYear();
@@ -113,6 +127,19 @@ export default function DashboardScreen() {
       }
     
       dataPoints = monthData;
+
+      // คำนวณค่าเฉลี่ยโซเดียมต่อวัน (เฉพาะวันที่บันทึก)
+      const recordedDays = dailyArray.filter(item => {
+        const [year, month] = item.date.split('-').map(Number);
+        return year === currentYear && month === currentMonth + 1 && item.totalSodium > 0;
+      });
+      if (recordedDays.length > 0) {
+        const totalSodium = recordedDays.reduce((sum, item) => sum + item.totalSodium, 0);
+        const average = Math.round(totalSodium / recordedDays.length);
+        setAverageSodium({ type: 'daily', value: average });
+      } else {
+        setAverageSodium(null);
+      }
     } else {
       const year = new Date().getFullYear();
       const monthNames = [
@@ -126,6 +153,16 @@ export default function DashboardScreen() {
       });
       labels = monthNames;
       dataPoints = yearData;
+
+      // คำนวณค่าเฉลี่ยโซเดียมต่อเดือน (เฉพาะเดือนที่บันทึก)
+      const recordedMonths = yearData.filter(value => value > 0);
+      if (recordedMonths.length > 0) {
+        const totalSodium = recordedMonths.reduce((sum, value) => sum + value, 0);
+        const average = Math.round(totalSodium / recordedMonths.length);
+        setAverageSodium({ type: 'monthly', value: average });
+      } else {
+        setAverageSodium(null);
+      }
     }
 
     setChartData({ labels, datasets: [{ data: dataPoints }] });
@@ -288,6 +325,14 @@ export default function DashboardScreen() {
                     <Text style={styles.emptyChartText}>ไม่มีข้อมูลสำหรับแสดงในกราฟ</Text>
                   </View>
                 )}
+                {averageSodium && (
+                  <View style={styles.averageContainer}>
+                    <Text style={styles.averageLabel}>
+                      {averageSodium.type === 'daily' ? 'ค่าเฉลี่ยโซเดียมต่อวัน: ' : 'ค่าเฉลี่ยโซเดียมต่อเดือน: '}
+                      <Text style={styles.averageValue}>{averageSodium.value} มก.</Text>
+                    </Text>
+                  </View>
+                )}
               </ChartContainer>
             )}
           </>
@@ -350,4 +395,19 @@ const styles = StyleSheet.create({
   chart: { marginVertical: 8, borderRadius: 8 },
   emptyChartContainer: { height: 220, justifyContent: 'center', alignItems: 'center' },
   emptyChartText: { fontSize: 16, fontFamily: 'Kanit-Regular', color: colors.textSecondary, textAlign: 'center' },
+  averageContainer: {
+    paddingTop: 8,
+    paddingBottom: 4,
+    alignItems: 'center',
+  },
+  averageLabel: {
+    fontSize: 14,
+    fontFamily: 'Kanit-Regular',
+    color: colors.textSecondary,
+  },
+  averageValue: {
+    fontSize: 14,
+    fontFamily: 'Kanit-Bold',
+    color: colors.textPrimary,
+  },
 });
