@@ -17,7 +17,8 @@ import {
   getFoodItems, 
   saveFoodItems, 
   addConsumption, 
-  getProfileData 
+  getProfileData,
+  getConsumptionHistory
 } from '../utils/storage';
 import initialFoods from '../data/initialFoods';
 import colors from '../constants/colors';

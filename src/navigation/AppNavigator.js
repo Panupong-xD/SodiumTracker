@@ -2,7 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { Text, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 // Import screens
 import ProfileScreen from '../screens/ProfileScreen';

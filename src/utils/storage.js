@@ -1,10 +1,9 @@
+// src/utils/storage.js
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Storage keys
-const PROFILE_KEY = '@kidney_tracker:profile';
-const FOOD_ITEMS_KEY = '@kidney_tracker:food_items';
-const CONSUMPTION_HISTORY_KEY = '@kidney_tracker:consumption_history';
-
+const PROFILE_KEY              = '@kidney_tracker:profile';
+const FOOD_ITEMS_KEY           = '@kidney_tracker:food_items';
+const CONSUMPTION_HISTORY_KEY  = '@kidney_tracker:consumption_history';
 /**
  * Initialize storage with default values if not set
  */
@@ -115,5 +114,19 @@ export const clearConsumptionHistory = async () => {
   } catch (error) {
     console.error('Error clearing consumption history:', error);
     throw error;
+  }
+};
+
+export const removeConsumptionById = async (id) => {
+  try {
+    const existing = await getConsumptionHistory();
+    const updated  = existing.filter(item => item.id !== id);
+    await AsyncStorage.setItem(
+      CONSUMPTION_HISTORY_KEY,
+      JSON.stringify(updated)
+    );
+  } catch (err) {
+    console.error('Error removing consumption record:', err);
+    throw err;
   }
 };

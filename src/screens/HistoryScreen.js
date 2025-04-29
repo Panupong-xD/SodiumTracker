@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+// src/screens/HistoryScreen.js
+import React, { useState, useCallback } from 'react';
 import {
   StyleSheet,
   View,
@@ -7,156 +8,172 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';   // ← เพิ่มบรรทัดนี้
 import { Ionicons } from '@expo/vector-icons';
-import { getConsumptionHistory, clearConsumptionHistory } from '../utils/storage';
+
+import {
+  getConsumptionHistory,
+  clearConsumptionHistory,
+  removeConsumptionById,
+} from '../utils/storage';
 import ConsumptionHistoryItem from '../components/ConsumptionHistoryItem';
 import colors from '../constants/colors';
 
+
 const HistoryScreen = () => {
   const [history, setHistory] = useState([]);
+  const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadHistory();
-  }, []);
+  const [search, setSearch] = useState('');
 
   const loadHistory = async () => {
     try {
       setLoading(true);
       const data = await getConsumptionHistory();
-      
-      // Sort by timestamp (newest first)
-      const sortedData = data ? 
-        [...data].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)) 
+      const sorted = data
+        ? [...data].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
         : [];
-      
-      setHistory(sortedData);
-    } catch (error) {
-      console.error('Error loading consumption history:', error);
-      Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดประวัติการบริโภคได้');
+      setHistory(sorted);
+      setFiltered(sorted);
+    } catch (err) {
+      console.error(err);
+      Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดประวัติได้');
     } finally {
       setLoading(false);
     }
   };
 
+  /* โหลดใหม่ทุกครั้งที่หน้า History กลับมาโฟกัส */
+  useFocusEffect(
+    useCallback(() => {
+      loadHistory();
+    }, []),
+  );
+
+  /* ค้นหา */
+  const onSearchChange = (txt) => {
+    setSearch(txt);
+    if (!txt.trim()) return setFiltered(history);
+    const f = history.filter((it) =>
+      it.foodName.toLowerCase().includes(txt.trim().toLowerCase()),
+    );
+    setFiltered(f);
+  };
+
+  const handleDeleteTodayItem = async (id) => {
+    await removeConsumptionById(id);
+    loadHistory();
+  };
+
   const handleClearHistory = () => {
-    Alert.alert(
-      'ลบประวัติทั้งหมด',
-      'คุณต้องการลบประวัติการบริโภคทั้งหมดหรือไม่?',
-      [
-        {
-          text: 'ยกเลิก',
-          style: 'cancel',
+    Alert.alert('ลบประวัติทั้งหมด', 'คุณต้องการลบประวัติการบริโภคทั้งหมดหรือไม่?', [
+      { text: 'ยกเลิก', style: 'cancel' },
+      {
+        text: 'ลบทั้งหมด',
+        style: 'destructive',
+        onPress: async () => {
+          await clearConsumptionHistory();
+          loadHistory();
+          Alert.alert('สำเร็จ', 'ลบประวัติทั้งหมดเรียบร้อยแล้ว');
         },
-        {
-          text: 'ลบทั้งหมด',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await clearConsumptionHistory();
-              setHistory([]);
-              Alert.alert('สำเร็จ', 'ลบประวัติการบริโภคทั้งหมดเรียบร้อยแล้ว');
-            } catch (error) {
-              console.error('Error clearing history:', error);
-              Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถลบประวัติการบริโภคได้');
-            }
-          },
-        },
-      ]
-    );
+      },
+    ]);
   };
 
-  const groupHistoryByDate = () => {
-    const grouped = {};
-    
-    history.forEach(item => {
-      const date = new Date(item.timestamp);
-      const dateKey = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
-      
-      if (!grouped[dateKey]) {
-        grouped[dateKey] = {
-          title: formatDate(date),
-          data: [],
-        };
-      }
-      
-      grouped[dateKey].data.push(item);
-    });
-    
-    return Object.values(grouped);
-  };
-
-  const formatDate = (date) => {
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    if (
-      date.getDate() === today.getDate() &&
-      date.getMonth() === today.getMonth() &&
-      date.getFullYear() === today.getFullYear()
-    ) {
-      return 'วันนี้';
-    } else if (
-      date.getDate() === yesterday.getDate() &&
-      date.getMonth() === yesterday.getMonth() &&
-      date.getFullYear() === yesterday.getFullYear()
-    ) {
-      return 'เมื่อวาน';
-    } else {
-      const day = date.getDate();
-      const month = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'][date.getMonth()];
-      const year = date.getFullYear() + 543; // Convert to Buddhist Era
-      return `${day} ${month} ${year}`;
-    }
-  };
-
-  const renderItem = ({ item }) => {
+  const isToday = (dateStr) => {
+    const d = new Date(dateStr);
+    const t = new Date();
     return (
-      <View style={styles.sectionContainer}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{item.title}</Text>
-        </View>
-        {item.data.map(historyItem => (
-          <ConsumptionHistoryItem key={historyItem.id} item={historyItem} />
-        ))}
-      </View>
+      d.getDate() === t.getDate() &&
+      d.getMonth() === t.getMonth() &&
+      d.getFullYear() === t.getFullYear()
     );
   };
+
+  const groupByDate = (list) => {
+    const grouped = {};
+    list.forEach((it) => {
+      const d = new Date(it.timestamp);
+      const key = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(it);
+    });
+    return Object.entries(grouped).map(([k, items]) => ({
+      title: formatHeader(new Date(items[0].timestamp)),
+      data: items,
+    }));
+  };
+
+  const formatHeader = (date) => {
+    const today = new Date();
+    const yest = new Date();
+    yest.setDate(today.getDate() - 1);
+    if (date.toDateString() === today.toDateString()) return 'วันนี้';
+    if (date.toDateString() === yest.toDateString()) return 'เมื่อวาน';
+    const monthTH = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+    return `${date.getDate()} ${monthTH[date.getMonth()]} ${date.getFullYear() + 543}`;
+  };
+
+  const renderSection = ({ item }) => (
+    <View style={styles.section}>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>{item.title}</Text>
+      </View>
+      {item.data.map((h) => (
+        <ConsumptionHistoryItem
+          key={h.id}
+          item={h}
+          isDeletable={isToday(h.timestamp)}
+          onDelete={handleDeleteTodayItem}
+        />
+      ))}
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.headerContainer}>
-        <Text style={styles.title}>ประวัติการบริโภค</Text>
+      {/* Header */}
+      <View style={styles.headerRow}>
+        <Text style={styles.header}>ประวัติการบริโภค</Text>
         {history.length > 0 && (
-          <TouchableOpacity onPress={handleClearHistory} style={styles.clearButton}>
+          <TouchableOpacity style={styles.clearRow} onPress={handleClearHistory}>
             <Ionicons name="trash-outline" size={20} color={colors.danger} />
-            <Text style={styles.clearButtonText}>ลบทั้งหมด</Text>
+            <Text style={styles.clearTxt}>ลบทั้งหมด</Text>
           </TouchableOpacity>
         )}
       </View>
 
+      {/* Search */}
+      <View style={styles.searchBox}>
+        <Ionicons name="search" size={20} color={colors.textSecondary} style={{ marginRight: 6 }} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="ค้นหารายการอาหาร..."
+          value={search}
+          onChangeText={onSearchChange}
+        />
+      </View>
+
+      {/* List */}
       {loading ? (
-        <View style={styles.loadingContainer}>
+        <View style={styles.loading}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>กำลังโหลดประวัติ...</Text>
+          <Text style={styles.loadingTxt}>กำลังโหลด...</Text>
         </View>
-      ) : history.length > 0 ? (
+      ) : filtered.length ? (
         <FlatList
-          data={groupHistoryByDate()}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.title}
-          contentContainerStyle={styles.listContent}
+          data={groupByDate(filtered)}
+          keyExtractor={(i) => i.title}
+          renderItem={renderSection}
+          contentContainerStyle={{ padding: 16 }}
         />
       ) : (
-        <View style={styles.emptyContainer}>
+        <View style={styles.empty}>
           <Ionicons name="time-outline" size={60} color={colors.textSecondary} />
-          <Text style={styles.emptyText}>ไม่มีประวัติการบริโภค</Text>
-          <Text style={styles.emptySubText}>
-            เมื่อคุณบันทึกการบริโภคอาหาร ข้อมูลจะปรากฏที่นี่
-          </Text>
+          <Text style={styles.emptyTxt}>ไม่พบประวัติ</Text>
         </View>
       )}
     </SafeAreaView>
@@ -164,91 +181,24 @@ const HistoryScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  title: {
-    fontSize: 18,
-    fontFamily: 'Kanit-Bold',
-    color: colors.textPrimary,
-  },
-  clearButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  clearButtonText: {
-    marginLeft: 4,
-    fontSize: 14,
-    fontFamily: 'Kanit-Regular',
-    color: colors.danger,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    fontFamily: 'Kanit-Regular',
-    color: colors.textSecondary,
-  },
-  listContent: {
-    padding: 16,
-  },
-  sectionContainer: {
-    marginBottom: 16,
-    backgroundColor: colors.white,
-    borderRadius: 12,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  sectionHeader: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    backgroundColor: colors.primaryLight,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontFamily: 'Kanit-Bold',
-    color: colors.primary,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  emptyText: {
-    marginTop: 16,
-    fontSize: 18,
-    fontFamily: 'Kanit-Bold',
-    color: colors.textSecondary,
-  },
-  emptySubText: {
-    marginTop: 8,
-    fontSize: 14,
-    fontFamily: 'Kanit-Regular',
-    color: colors.textSecondary,
-    textAlign: 'center',
-  },
+  container: { flex: 1, backgroundColor: colors.background },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: colors.white, borderBottomWidth: 1, borderBottomColor: colors.border },
+  header: { fontSize: 18, fontFamily: 'Kanit-Bold', color: colors.textPrimary },
+  clearRow: { flexDirection: 'row', alignItems: 'center' },
+  clearTxt: { marginLeft: 4, fontSize: 14, fontFamily: 'Kanit-Regular', color: colors.danger },
+
+  searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.white, margin: 16, borderRadius: 8, paddingHorizontal: 12, borderWidth: 1, borderColor: colors.border },
+  searchInput: { flex: 1, paddingVertical: 10, fontSize: 16, fontFamily: 'Kanit-Regular' },
+
+  section: { marginBottom: 16, backgroundColor: colors.white, borderRadius: 12, overflow: 'hidden', elevation: 2 },
+  sectionHeader: { paddingVertical: 10, paddingHorizontal: 16, backgroundColor: colors.primaryLight, borderBottomWidth: 1, borderBottomColor: colors.border },
+  sectionTitle: { fontSize: 16, fontFamily: 'Kanit-Bold', color: colors.primary },
+
+  loading: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingTxt: { marginTop: 10, fontSize: 16, fontFamily: 'Kanit-Regular', color: colors.textSecondary },
+
+  empty: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  emptyTxt: { marginTop: 16, fontSize: 18, fontFamily: 'Kanit-Bold', color: colors.textSecondary },
 });
 
 export default HistoryScreen;
