@@ -91,15 +91,28 @@ export default function DashboardScreen() {
       });
       dataPoints = last7.map(d => groupedByDay[d]?.totalSodium || 0);
     } else if (period === 'monthly') {
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = now.getMonth();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    
+      const monthData = [];
+      labels.length = 0;
+    
       for (let i = 1; i <= daysInMonth; i++) {
-        labels.push(`${i}`);
-        const key = `${year}-${month + 1}-${i}`;
-        dataPoints.push(groupedByDay[key]?.totalSodium || 0);
+        const dateKey = `${currentYear}-${currentMonth + 1}-${i}`;
+        const dayData = groupedByDay[dateKey];
+    
+        monthData.push(dayData ? dayData.totalSodium : 0);
+    
+        // ใส่ label เฉพาะวันที่หาร 5 ลงตัว (5,10,15,20,25,30)
+        if (i % 5 === 0 || i === daysInMonth) {
+          labels.push(i.toString());
+        } else {
+          labels.push(''); // วันที่ไม่หาร 5 ลงตัว ให้ label ว่าง
+        }
       }
+    
+      dataPoints = monthData;
     } else {
       const year = new Date().getFullYear();
       const monthNames = [
