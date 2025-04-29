@@ -136,6 +136,40 @@ export default function DashboardScreen() {
     return todayData ? todayData.totalSodium : 0;
   };
 
+  const getSodiumStatus = (percentage) => {
+    if (percentage < 25) {
+      return {
+        message: 'โซเดียมน้อยเกินไป๊',
+        color: '#FFC107', // เขียวเข้ม
+        emoji: '😵‍💫',
+      };
+    } else if (percentage >= 25 && percentage < 75) {
+      return {
+        message: 'โซเดียมน้อยไปหน่อยนะ',
+        color: '#85C17E', // เขียวอ่อน
+        emoji: '😐',
+      };
+    } else if (percentage >= 75 && percentage < 115) {
+      return {
+        message: 'โซเดียมอยู่ในเกณฑ์ดีเยี่ยม',
+        color: '#28A745', // เหลือง
+        emoji: '😀',
+      };
+    } else if (percentage >= 115 && percentage <= 175) {
+      return {
+        message: 'โซเดียมสูงไปแล้วนะ',
+        color: '#FF851B', // ส้ม
+        emoji: '😟',
+      };
+    } else {
+      return {
+        message: 'โซเดียมสูงเกิ๊นอันตรายสุดๆ',
+        color: '#DC3545', // แดง
+        emoji: '😵',
+      };
+    }
+  };
+
   const renderSummary = () => {
     if (!profile) {
       return (
@@ -148,9 +182,10 @@ export default function DashboardScreen() {
     }
     const recommended = parseInt(profile.recommendedSodium, 10) || 2000;
     const todayConsumption = getTodayConsumption();
-    const percentage = Math.min(
-      Math.round((todayConsumption / recommended) * 100), 100
-    );
+    const percentage = Math.round((todayConsumption / recommended) * 100); // คำนวณ % แบบไม่ตัน
+    const progressWidth = Math.min(percentage, 100); // หลอดตันที่ 100%
+    const sodiumStatus = getSodiumStatus(percentage); // ดึงสถานะโซเดียม
+
     return (
       <View style={styles.summaryContainer}>
         <Text style={styles.summaryTitle}>สรุปการบริโภคโซเดียมวันนี้</Text>
@@ -159,11 +194,16 @@ export default function DashboardScreen() {
             <View
               style={[
                 styles.progressFill,
-                { width: `${percentage}%`, backgroundColor: percentage > 90 ? colors.danger : colors.primary }
+                { width: `${progressWidth}%`, backgroundColor: sodiumStatus.color }
               ]}
             />
           </View>
           <Text style={styles.progressText}>{percentage}%</Text>
+        </View>
+        <View style={styles.recommendationContainer}>
+          <Text style={[styles.recommendationText, { color: sodiumStatus.color }]}>
+            {sodiumStatus.emoji} {sodiumStatus.message}
+          </Text>
         </View>
         <View style={styles.sodiumInfoContainer}>
           <View style={styles.sodiumInfoItem}>
@@ -266,10 +306,20 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2
   },
   summaryTitle: { fontSize: 18, fontFamily: 'Kanit-Bold', color: colors.textPrimary, marginBottom: 16 },
-  progressContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  progressContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   progressBar: { flex: 1, height: 12, backgroundColor: colors.border, borderRadius: 6, overflow: 'hidden', marginRight: 10 },
   progressFill: { height: '100%' },
   progressText: { fontSize: 14, fontFamily: 'Kanit-Bold', width: 40, textAlign: 'right' },
+  recommendationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  recommendationText: {
+    fontSize: 17,
+    fontFamily: 'Kanit-Regular',
+    marginLeft: 8,
+  },
   sodiumInfoContainer: { flexDirection: 'row', justifyContent: 'space-between' },
   sodiumInfoItem: { flex: 1, alignItems: 'center' },
   sodiumInfoDivider: { width: 1, backgroundColor: colors.border, marginHorizontal: 10 },
