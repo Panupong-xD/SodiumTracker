@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { formatSodiumAmount } from '../utils/sodiumCalculator';
 import colors from '../constants/colors';
 
-const FoodItem = ({ food, onConsume, onDelete }) => {
+const FoodItem = ({ food, onConsume, onDelete, onToggleFavorite }) => {
   // Mapping ชื่อไฟล์รูปภาพเป็นผลลัพธ์ของ require
   const imageMap = {
     'food1.jpg': require('../../assets/images/food1.jpg'),
@@ -25,19 +25,35 @@ const FoodItem = ({ food, onConsume, onDelete }) => {
       <Image source={imageSource} style={styles.foodImage} />
 
       <Text style={styles.foodName}>{food.name}</Text>
+
       <Text style={styles.sodiumText}>{formatSodiumAmount(food.sodium)}</Text>
 
       <View style={styles.buttonContainer}>
+        {/* บรรทัดแรก: ปุ่มดาวและปุ่มถังขยะ */}
+        <View style={styles.topRow}>
+          <TouchableOpacity
+            onPress={onToggleFavorite}
+            style={[styles.favoriteButton, !onDelete && styles.fullWidthButton]}
+          >
+            <Ionicons
+              name={food.isFavorite ? 'star' : 'star-outline'}
+              size={16}
+              color={food.isFavorite ? '#FFD700' : colors.textSecondary}
+            />
+          </TouchableOpacity>
+
+          {onDelete && (
+            <TouchableOpacity style={styles.deleteButton} onPress={onDelete}>
+              <Ionicons name="trash-outline" size={16} color={colors.white} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* บรรทัดที่สอง: ปุ่มบันทึก */}
         <TouchableOpacity style={styles.consumeButton} onPress={onConsume}>
           <Text style={styles.consumeButtonText}>บันทึก</Text>
           <Ionicons name="add-circle-outline" size={16} color={colors.white} />
         </TouchableOpacity>
-
-        {onDelete && (
-          <TouchableOpacity style={styles.deleteButton} onPress={onDelete}>
-            <Ionicons name="trash-outline" size={16} color={colors.white} />
-          </TouchableOpacity>
-        )}
       </View>
     </View>
   );
@@ -68,6 +84,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Kanit-Regular',
     color: colors.textPrimary,
     textAlign: 'center',
+    marginBottom: 4,
   },
   sodiumText: {
     fontSize: 14,
@@ -76,30 +93,53 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   buttonContainer: {
-    flexDirection: 'row',
+    width: '100%', // ให้ปุ่มทั้งหมดอยู่ในขอบเขตของ container
     alignItems: 'center',
+    gap: 8, // ระยะห่างระหว่างบรรทัด
+  },
+  topRow: {
+    flexDirection: 'row',
     justifyContent: 'center',
+    width: '100%',
     gap: 8,
+  },
+  favoriteButton: {
+    backgroundColor: colors.white,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    flex: 1, // ให้ปุ่มดาวขยายตามขนาดที่เหลือ
+    alignItems: 'center',
+  },
+  deleteButton: {
+    backgroundColor: colors.danger,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    flex: 1, // ให้ปุ่มถังขยะมีขนาดเท่ากับปุ่มดาว
+    alignItems: 'center',
+  },
+  fullWidthButton: {
+    flex: 0, // ปิดการยืดแบบ flex
+    width: '100%', // ถ้ามีเฉพาะปุ่มดาว ให้ยืดเต็มความกว้าง
   },
   consumeButton: {
     flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.primary,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
+    width: '100%', // ปุ่มบันทึกยืดเต็มความกว้าง
   },
   consumeButtonText: {
     color: colors.white,
     fontSize: 14,
     fontFamily: 'Kanit-Regular',
     marginRight: 4,
-  },
-  deleteButton: {
-    backgroundColor: colors.danger,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 20,
   },
 });
 

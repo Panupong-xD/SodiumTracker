@@ -24,7 +24,8 @@ import colors from '../constants/colors';
 // โหลดข้อมูลจาก initialFoods.json
 const initialFoods = require('../data/initialFoods.json').map(item => ({
   ...item,
-  isCustom: false, // เพิ่ม flag เพื่อระบุว่าเป็นเมนูเริ่มต้น
+  isCustom: false,
+  isFavorite: false, // เพิ่มฟิลด์ isFavorite และตั้งค่าเริ่มต้นเป็น false
 }));
 
 const MenuScreen = () => {
@@ -42,23 +43,21 @@ const MenuScreen = () => {
         let updatedFoodItems = savedFoodItems;
 
         if (savedFoodItems && savedFoodItems.length > 0) {
-          // ตรวจสอบและเพิ่ม image ถ้าขาดหาย (สำหรับข้อมูลเก่า)
+          // ตรวจสอบและเพิ่ม image และ isFavorite ถ้าขาดหาย (สำหรับข้อมูลเก่า)
           updatedFoodItems = savedFoodItems.map(item => {
-            if (!item.image) {
-              const matchingInitialFood = initialFoods.find(initialItem => initialItem.id === item.id);
-              return {
-                ...item,
-                image: matchingInitialFood ? matchingInitialFood.image : 'food1.jpg',
-              };
-            }
-            return item;
+            const matchingInitialFood = initialFoods.find(initialItem => initialItem.id === item.id);
+            return {
+              ...item,
+              image: item.image || (matchingInitialFood ? matchingInitialFood.image : 'food1.jpg'),
+              isFavorite: item.isFavorite ?? false, // ถ้าไม่มี isFavorite ให้ตั้งค่าเป็น false
+            };
           });
           setFoodItems(updatedFoodItems);
-          setFilteredItems(updatedFoodItems);
+          setFilteredItems(sortItems(updatedFoodItems)); // เรียงลำดับหลังโหลด
         } else {
           console.log('Using initialFoods:', initialFoods);
           setFoodItems(initialFoods);
-          setFilteredItems(initialFoods);
+          setFilteredItems(sortItems(initialFoods));
           await saveFoodItems(initialFoods);
         }
 
@@ -75,21 +74,31 @@ const MenuScreen = () => {
     loadData();
   }, []);
 
+  // ฟังก์ชันสำหรับเรียงลำดับ: เมนูที่ติดดาวอยู่ด้านบน
+  const sortItems = (items) => {
+    return [...items].sort((a, b) => {
+      if (a.isFavorite && !b.isFavorite) return -1; // a ติดดาว, b ไม่ติดดาว -> a อยู่บน
+      if (!a.isFavorite && b.isFavorite) return 1;  // a ไม่ติดดาว, b ติดดาว -> b อยู่บน
+      return 0; // ถ้าสถานะเท่ากัน ให้คงลำดับเดิม
+    });
+  };
+
   useEffect(() => {
     if (searchQuery.trim() === '') {
-      setFilteredItems(foodItems);
+      setFilteredItems(sortItems(foodItems));
     } else {
       const filtered = foodItems.filter(item =>
         item.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
-      setFilteredItems(filtered);
+      setFilteredItems(sortItems(filtered));
     }
   }, [searchQuery, foodItems]);
 
   const handleAddFood = async (newFood) => {
     try {
-      const updatedFoodItems = [...foodItems, { ...newFood, id: Date.now().toString() }];
+      const updatedFoodItems = [...foodItems, { ...newFood, id: Date.now().toString(), isFavorite: false }];
       setFoodItems(updatedFoodItems);
+      setFilteredItems(sortItems(updatedFoodItems));
       await saveFoodItems(updatedFoodItems);
       setIsAddModalVisible(false);
     } catch (error) {
@@ -110,7 +119,7 @@ const MenuScreen = () => {
             try {
               const updatedFoodItems = foodItems.filter(item => item.id !== foodId);
               setFoodItems(updatedFoodItems);
-              setFilteredItems(updatedFoodItems);
+              setFilteredItems(sortItems(updatedFoodItems));
               await saveFoodItems(updatedFoodItems);
               Alert.alert('สำเร็จ', 'ลบเมนูเรียบร้อยแล้ว');
             } catch (error) {
@@ -120,6 +129,22 @@ const MenuScreen = () => {
         },
       ]
     );
+  };
+
+  const handleToggleFavorite = async (foodId) => {
+    try {
+      const updatedFoodItems = foodItems.map(item => {
+        if (item.id === foodId) {
+          return { ...item, isFavorite: !item.isFavorite };
+        }
+        return item;
+      });
+      setFoodItems(updatedFoodItems);
+      setFilteredItems(sortItems(updatedFoodItems));
+      await saveFoodItems(updatedFoodItems);
+    } catch (error) {
+      Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถอัปเดตสถานะรายการโปรดได้');
+    }
   };
 
   const handleConsume = async (food) => {
@@ -175,7 +200,8 @@ const MenuScreen = () => {
               <FoodItem
                 food={item}
                 onConsume={() => handleConsume(item)}
-                onDelete={item.isCustom ? () => handleDeleteFood(item.id) : null} // ส่ง onDelete เฉพาะเมนูที่เพิ่มโดยผู้ใช้
+                onDelete={item.isCustom ? () => handleDeleteFood(item.id) : null}
+                onToggleFavorite={() => handleToggleFavorite(item.id)} // เพิ่ม prop สำหรับติดดาว
               />
             )}
             columnWrapperStyle={styles.gridRow}

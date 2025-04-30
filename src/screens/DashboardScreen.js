@@ -84,6 +84,10 @@ export default function DashboardScreen() {
 
     let labels = [];
     let dataPoints = [];
+    let recommendedData = []; // เพิ่ม dataset สำหรับเส้นแนวนอน
+
+    // ดึงปริมาณโซเดียมที่แนะนำ
+    const recommendedSodium = parseInt(profile?.recommendedSodium, 10) || 2000;
 
     if (period === 'weekly') {
       const last7 = getLast7Days();
@@ -92,6 +96,7 @@ export default function DashboardScreen() {
         return `${date.getDate()}/${date.getMonth() + 1}`;
       });
       dataPoints = last7.map(d => groupedByDay[d]?.totalSodium || 0);
+      recommendedData = Array(last7.length).fill(recommendedSodium); // เส้นแนวนอนที่ recommendedSodium
 
       // คำนวณค่าเฉลี่ยโซเดียมต่อวันใน 7 วันล่าสุด (เฉพาะวันที่บันทึก)
       const recordedDays = last7
@@ -127,6 +132,7 @@ export default function DashboardScreen() {
       }
     
       dataPoints = monthData;
+      recommendedData = Array(monthData.length).fill(recommendedSodium); // เส้นแนวนอนที่ recommendedSodium
 
       // คำนวณค่าเฉลี่ยโซเดียมต่อวัน (เฉพาะวันที่บันทึก)
       const recordedDays = dailyArray.filter(item => {
@@ -153,7 +159,8 @@ export default function DashboardScreen() {
       });
       labels = monthNames;
       dataPoints = yearData;
-    
+      recommendedData = []; // ไม่แสดงเส้นแนวนอนในกราฟรายปี
+
       // คำนวณค่าเฉลี่ยโซเดียมต่อวันของทั้งปี (เฉพาะวันที่บันทึก)
       const recordedDays = dailyArray.filter(item => {
         const [y] = item.date.split('-').map(Number);
@@ -176,7 +183,20 @@ export default function DashboardScreen() {
       }
     }
 
-    setChartData({ labels, datasets: [{ data: dataPoints }] });
+    // เพิ่ม dataset สำหรับเส้นแนวนอน (เฉพาะ weekly และ monthly)
+    const datasets = [
+      { data: dataPoints, color: (opacity = 1) => `rgba(12,97,112,${opacity})` }, // เส้นข้อมูลหลัก
+    ];
+    if (recommendedData.length > 0) {
+      datasets.push({
+        data: recommendedData,
+        color: (opacity = 1) => `rgba(255,0,0,${opacity})`, // เส้นสีแดง
+        strokeWidth: 2,
+        withDots: false,
+      });
+    }
+
+    setChartData({ labels, datasets });
   };
 
   const getLast7Days = () => {
@@ -323,10 +343,10 @@ export default function DashboardScreen() {
                       backgroundGradientFrom: colors.white,
                       backgroundGradientTo: colors.white,
                       decimalPlaces: 0,
-                      color: opacity => `rgba(12,97,112,${opacity})`,
-                      labelColor: opacity => `rgba(0,0,0,${opacity})`,
+                      color: (opacity = 1) => `rgba(12,97,112,${opacity})`, // สีเส้นหลัก
+                      labelColor: (opacity = 1) => `rgba(0,0,0,${opacity})`,
                       style: { borderRadius: 16 },
-                      propsForDots: { r: '4', strokeWidth: '2', stroke: colors.primary }
+                      propsForDots: { r: '4', strokeWidth: '2', stroke: colors.primary },
                     }}
                     bezier
                     style={styles.chart}
@@ -420,5 +440,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Kanit-Bold',
     color: colors.textPrimary,
+  },
+  recommendedContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 4,
+    paddingBottom: 8,
+  },
+  recommendedLine: {
+    width: 20,
+    height: 2,
+    backgroundColor: 'red',
+    marginRight: 8,
+  },
+  recommendedLabel: {
+    fontSize: 14,
+    fontFamily: 'Kanit-Regular',
+    color: colors.textSecondary,
   },
 });
