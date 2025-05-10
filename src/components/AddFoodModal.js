@@ -1,3 +1,4 @@
+// src/components/AddFoodModal.js (FULL FILE — optional image, default fallback)
 import React, { useState } from 'react';
 import {
   StyleSheet,
@@ -17,21 +18,24 @@ import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import colors from '../constants/colors';
 
+/**
+ * Modal สำหรับเพิ่มเมนูอาหารใหม่
+ * • ไม่บังคับเลือกรูป — ถ้าไม่เลือกจะใช้รูป defaultFood.png
+ * • ไม่แก้ไข Style ใด ๆ จากไฟล์ต้นฉบับ
+ */
 const AddFoodModal = ({ visible, onClose, onAddFood }) => {
   const [foodName, setFoodName] = useState('');
   const [sodiumAmount, setSodiumAmount] = useState('');
-  const [image, setImage] = useState(null); // เก็บ URI ของภาพที่เลือก
+  const [image, setImage] = useState(null); // URI ของภาพที่เลือก (ถ้ามี)
 
-  // ฟังก์ชันสำหรับเลือกภาพจากแกลเลอรี่
+  /* เลือกรูปจากแกลเลอรี่ */
   const pickImage = async () => {
-    // ขออนุญาตเข้าถึงแกลเลอรี่
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
       Alert.alert('ต้องให้สิทธิ์', 'กรุณาให้สิทธิ์ในการเข้าถึงแกลเลอรี่เพื่อเลือกภาพ');
       return;
     }
 
-    // เปิดแกลเลอรี่ให้ผู้ใช้เลือกภาพ
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -40,20 +44,18 @@ const AddFoodModal = ({ visible, onClose, onAddFood }) => {
     });
 
     if (!result.canceled) {
-      setImage(result.assets[0].uri); // เก็บ URI ของภาพ
+      setImage(result.assets[0].uri);
     }
   };
 
-  // ฟังก์ชันสำหรับถ่ายภาพใหม่
+  /* ถ่ายรูปใหม่ */
   const takePhoto = async () => {
-    // ขออนุญาตเข้าถึงกล้อง
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
     if (!permissionResult.granted) {
       Alert.alert('ต้องให้สิทธิ์', 'กรุณาให้สิทธิ์ในการเข้าถึงกล้องเพื่อถ่ายภาพ');
       return;
     }
 
-    // เปิดกล้องให้ผู้ใช้ถ่ายภาพ
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -62,12 +64,12 @@ const AddFoodModal = ({ visible, onClose, onAddFood }) => {
     });
 
     if (!result.canceled) {
-      setImage(result.assets[0].uri); // เก็บ URI ของภาพ
+      setImage(result.assets[0].uri);
     }
   };
 
+  /* บันทึกเมนูใหม่ */
   const handleSubmit = () => {
-    // Validate inputs
     if (!foodName.trim()) {
       Alert.alert('กรุณาระบุชื่ออาหาร');
       return;
@@ -78,20 +80,13 @@ const AddFoodModal = ({ visible, onClose, onAddFood }) => {
       return;
     }
 
-    if (!image) {
-      Alert.alert('กรุณาเลือกภาพ');
-      return;
-    }
-
-    // Create new food item
     const newFood = {
       name: foodName.trim(),
       sodium: Number(sodiumAmount),
-      image, // ใช้ URI ของภาพที่เลือก
-      isCustom: true, // เพิ่ม flag เพื่อระบุว่าเป็นเมนูที่ผู้ใช้เพิ่ม
+      image: image || 'defaultFood.png', // 🔹 ใช้รูป default หากผู้ใช้ไม่เลือกรูป
+      isCustom: true,
     };
 
-    // Pass to parent component
     onAddFood(newFood);
 
     // Reset form
@@ -101,12 +96,7 @@ const AddFoodModal = ({ visible, onClose, onAddFood }) => {
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.centeredView}>
           <KeyboardAvoidingView
@@ -114,6 +104,7 @@ const AddFoodModal = ({ visible, onClose, onAddFood }) => {
             style={styles.keyboardAvoidingView}
           >
             <View style={styles.modalView}>
+              {/* Header */}
               <View style={styles.header}>
                 <Text style={styles.headerText}>เพิ่มอาหารใหม่</Text>
                 <TouchableOpacity onPress={onClose} style={styles.closeButton}>
@@ -121,7 +112,9 @@ const AddFoodModal = ({ visible, onClose, onAddFood }) => {
                 </TouchableOpacity>
               </View>
 
+              {/* Form */}
               <View style={styles.form}>
+                {/* ชื่ออาหาร */}
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>ชื่ออาหาร</Text>
                   <TextInput
@@ -132,6 +125,7 @@ const AddFoodModal = ({ visible, onClose, onAddFood }) => {
                   />
                 </View>
 
+                {/* ปริมาณโซเดียม */}
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>ปริมาณโซเดียม (มิลลิกรัม)</Text>
                   <TextInput
@@ -143,8 +137,9 @@ const AddFoodModal = ({ visible, onClose, onAddFood }) => {
                   />
                 </View>
 
+                {/* เลือกรูป / ถ่ายรูป */}
                 <View style={styles.formGroup}>
-                  <Text style={styles.label}>เลือกภาพ</Text>
+                  <Text style={styles.label}>เลือกภาพ (ไม่บังคับ)</Text>
                   <View style={styles.imagePickerContainer}>
                     <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
                       <Text style={styles.imageButtonText}>เลือกจากแกลเลอรี่</Text>
@@ -153,15 +148,11 @@ const AddFoodModal = ({ visible, onClose, onAddFood }) => {
                       <Text style={styles.imageButtonText}>ถ่ายภาพ</Text>
                     </TouchableOpacity>
                   </View>
-                  {image && (
-                    <Image source={{ uri: image }} style={styles.previewImage} />
-                  )}
+                  {image && <Image source={{ uri: image }} style={styles.previewImage} />}
                 </View>
 
-                <TouchableOpacity
-                  style={styles.addButton}
-                  onPress={handleSubmit}
-                >
+                {/* ปุ่มเพิ่มอาหาร */}
+                <TouchableOpacity style={styles.addButton} onPress={handleSubmit}>
                   <Text style={styles.addButtonText}>เพิ่มอาหาร</Text>
                 </TouchableOpacity>
               </View>
@@ -173,11 +164,12 @@ const AddFoodModal = ({ visible, onClose, onAddFood }) => {
   );
 };
 
+/* ---------- Style (เหมือนไฟล์ต้นฉบับ) ---------- */
 const styles = StyleSheet.create({
   centeredView: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   keyboardAvoidingView: {
     width: '100%',
@@ -188,10 +180,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     paddingBottom: 20,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: -3,
-    },
+    shadowOffset: { width: 0, height: -3 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,

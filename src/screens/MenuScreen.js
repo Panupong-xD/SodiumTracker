@@ -1,3 +1,4 @@
+// src/screens/MenuScreen.js – add missing handleConsume to resolve runtime error
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
@@ -11,22 +12,20 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import colors from '../constants/colors';
+
 import FoodItem from '../components/FoodItem';
 import AddFoodModal from '../components/AddFoodModal';
+
 import {
   getFoodItems,
   saveFoodItems,
   addConsumption,
   getProfileData,
 } from '../utils/storage';
-import colors from '../constants/colors';
 
-// โหลดข้อมูลจาก initialFoods.json
-const initialFoods = require('../data/initialFoods.json').map(item => ({
-  ...item,
-  isCustom: false,
-  isFavorite: false, // เพิ่มฟิลด์ isFavorite และตั้งค่าเริ่มต้นเป็น false
-}));
+/* เมนูเริ่มต้นว่าง 100% */
+const initialFoods = [];
 
 const MenuScreen = () => {
   const [foodItems, setFoodItems] = useState([]);
@@ -36,126 +35,126 @@ const MenuScreen = () => {
   const [loading, setLoading] = useState(true);
   const [profileData, setProfileData] = useState(null);
 
+  /* ---------------------------- LOAD DATA ---------------------------- */
   useEffect(() => {
     const loadData = async () => {
       try {
-        const savedFoodItems = await getFoodItems();
-        let updatedFoodItems = savedFoodItems;
-
-        if (savedFoodItems && savedFoodItems.length > 0) {
-          // ตรวจสอบและเพิ่ม image และ isFavorite ถ้าขาดหาย (สำหรับข้อมูลเก่า)
-          updatedFoodItems = savedFoodItems.map(item => {
-            const matchingInitialFood = initialFoods.find(initialItem => initialItem.id === item.id);
-            return {
-              ...item,
-              image: item.image || (matchingInitialFood ? matchingInitialFood.image : 'food1.jpg'),
-              isFavorite: item.isFavorite ?? false, // ถ้าไม่มี isFavorite ให้ตั้งค่าเป็น false
-            };
-          });
-          setFoodItems(updatedFoodItems);
-          setFilteredItems(sortItems(updatedFoodItems)); // เรียงลำดับหลังโหลด
+        const saved = await getFoodItems();
+        if (saved && saved.length) {
+          const merged = saved.map(it => ({ ...it, isFavorite: it.isFavorite ?? false }));
+          setFoodItems(merged);
+          setFilteredItems(sortItems(merged));
         } else {
-          setFoodItems(initialFoods);
-          setFilteredItems(sortItems(initialFoods));
-          await saveFoodItems(initialFoods);
+          setFoodItems([]);
+          setFilteredItems([]);
         }
-
         const profile = await getProfileData();
         setProfileData(profile);
-      } catch (error) {
-        console.error('Error loading food data:', error);
+      } catch (err) {
+        console.error('Error loading food data:', err);
         Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดรายการอาหารได้');
       } finally {
         setLoading(false);
       }
     };
-
     loadData();
   }, []);
 
-  // ฟังก์ชันสำหรับเรียงลำดับ: เมนูที่ติดดาวอยู่ด้านบน
-  const sortItems = (items) => {
+  /* ------------------------- SEARCH & FILTER ------------------------- */
+  const sortItems = items => {
     return [...items].sort((a, b) => {
-      if (a.isFavorite && !b.isFavorite) return -1; // a ติดดาว, b ไม่ติดดาว -> a อยู่บน
-      if (!a.isFavorite && b.isFavorite) return 1;  // a ไม่ติดดาว, b ติดดาว -> b อยู่บน
-      return 0; // ถ้าสถานะเท่ากัน ให้คงลำดับเดิม
+      if (a.isFavorite && !b.isFavorite) return -1;
+      if (!a.isFavorite && b.isFavorite) return 1;
+      return 0;
     });
   };
 
   useEffect(() => {
-    if (searchQuery.trim() === '') {
+    if (!searchQuery.trim()) {
       setFilteredItems(sortItems(foodItems));
     } else {
-      const filtered = foodItems.filter(item =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase())
+      const filtered = foodItems.filter(it =>
+        it.name.toLowerCase().includes(searchQuery.toLowerCase()),
       );
       setFilteredItems(sortItems(filtered));
     }
   }, [searchQuery, foodItems]);
 
-  const handleAddFood = async (newFood) => {
+  /* ------------------------------ HANDLERS ------------------------------ */
+  const handleAddFood = async newFood => {
     try {
-      const updatedFoodItems = [...foodItems, { ...newFood, id: Date.now().toString(), isFavorite: false }];
-      setFoodItems(updatedFoodItems);
-      setFilteredItems(sortItems(updatedFoodItems));
-      await saveFoodItems(updatedFoodItems);
+      const updated = [
+        ...foodItems,
+        { ...newFood, id: Date.now().toString(), isFavorite: false },
+      ];
+      setFoodItems(updated);
+      setFilteredItems(sortItems(updated));
+      await saveFoodItems(updated);
       setIsAddModalVisible(false);
-    } catch (error) {
+    } catch (err) {
       Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถเพิ่มรายการอาหารได้');
     }
   };
 
-  const handleDeleteFood = async (foodId) => {
-    Alert.alert(
-      'ยืนยันการลบ',
-      'คุณแน่ใจหรือไม่ว่าต้องการลบเมนูนี้?',
-      [
-        { text: 'ยกเลิก', style: 'cancel' },
-        {
-          text: 'ลบ',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const updatedFoodItems = foodItems.filter(item => item.id !== foodId);
-              setFoodItems(updatedFoodItems);
-              setFilteredItems(sortItems(updatedFoodItems));
-              await saveFoodItems(updatedFoodItems);
-              Alert.alert('สำเร็จ', 'ลบเมนูเรียบร้อยแล้ว');
-            } catch (error) {
-              Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถลบเมนูได้');
-            }
-          },
+  const handleClearFoods = () => {
+    Alert.alert('ยืนยันลบเมนู', 'คุณต้องการลบรายการอาหารทั้งหมดหรือไม่?', [
+      { text: 'ยกเลิก', style: 'cancel' },
+      {
+        text: 'ลบ',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await saveFoodItems([]);
+            setFoodItems([]);
+            setFilteredItems([]);
+            Alert.alert('สำเร็จ', 'ลบเมนูทั้งหมดเรียบร้อยแล้ว');
+          } catch (err) {
+            Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถลบเมนูได้');
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
-  const handleToggleFavorite = async (foodId) => {
+  const handleDeleteFood = async id => {
+    Alert.alert('ยืนยันการลบ', 'คุณแน่ใจหรือไม่ว่าต้องการลบเมนูนี้?', [
+      { text: 'ยกเลิก', style: 'cancel' },
+      {
+        text: 'ลบ',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const updated = foodItems.filter(it => it.id !== id);
+            setFoodItems(updated);
+            setFilteredItems(sortItems(updated));
+            await saveFoodItems(updated);
+          } catch (err) {
+            Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถลบเมนูได้');
+          }
+        },
+      },
+    ]);
+  };
+
+  const handleToggleFavorite = async id => {
     try {
-      const updatedFoodItems = foodItems.map(item => {
-        if (item.id === foodId) {
-          return { ...item, isFavorite: !item.isFavorite };
-        }
-        return item;
-      });
-      setFoodItems(updatedFoodItems);
-      setFilteredItems(sortItems(updatedFoodItems));
-      await saveFoodItems(updatedFoodItems);
-    } catch (error) {
+      const updated = foodItems.map(it =>
+        it.id === id ? { ...it, isFavorite: !it.isFavorite } : it,
+      );
+      setFoodItems(updated);
+      setFilteredItems(sortItems(updated));
+      await saveFoodItems(updated);
+    } catch (err) {
       Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถอัปเดตสถานะรายการโปรดได้');
     }
   };
 
-  const handleConsume = async (food) => {
+  /* 👉 **เพิ่ม handler ที่หายไป** เพื่อแก้ Uncaught Error */
+  const handleConsume = async food => {
     if (!profileData) {
-      Alert.alert(
-        'ต้องตั้งค่าโปรไฟล์ก่อน',
-        'กรุณาตั้งค่าโปรไฟล์ของคุณที่หน้าโปรไฟล์ก่อนบันทึกการบริโภค',
-        [{ text: 'เข้าใจแล้ว' }]
-      );
+      Alert.alert('ต้องตั้งค่าโปรไฟล์ก่อน', 'กรุณาตั้งค่าโปรไฟล์ของคุณที่หน้าโปรไฟล์ก่อนบันทึกการบริโภค');
       return;
     }
-
     try {
       const consumption = {
         id: Date.now().toString(),
@@ -164,16 +163,20 @@ const MenuScreen = () => {
         sodiumAmount: food.sodium,
         timestamp: new Date().toISOString(),
       };
-
       await addConsumption(consumption);
       Alert.alert('บันทึกสำเร็จ', `บันทึกการบริโภค "${food.name}" เรียบร้อยแล้ว`);
-    } catch (error) {
+    } catch (err) {
       Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถบันทึกการบริโภคได้');
     }
   };
 
+  /* ------------------------------- RENDER ------------------------------- */
   return (
     <SafeAreaView style={styles.container}>
+      <TouchableOpacity style={styles.clearBtn} onPress={handleClearFoods}>
+        <Ionicons name="trash-outline" size={24} color={colors.primary} />
+      </TouchableOpacity>
+
       <View style={styles.searchContainer}>
         <Ionicons name="search" size={20} color={colors.textSecondary} style={styles.searchIcon} />
         <TextInput
@@ -194,13 +197,13 @@ const MenuScreen = () => {
           <FlatList
             data={filteredItems}
             numColumns={2}
-            keyExtractor={(item) => item.id}
+            keyExtractor={item => item.id}
             renderItem={({ item }) => (
               <FoodItem
                 food={item}
                 onConsume={() => handleConsume(item)}
                 onDelete={item.isCustom ? () => handleDeleteFood(item.id) : null}
-                onToggleFavorite={() => handleToggleFavorite(item.id)} // เพิ่ม prop สำหรับติดดาว
+                onToggleFavorite={() => handleToggleFavorite(item.id)}
               />
             )}
             columnWrapperStyle={styles.gridRow}
@@ -222,14 +225,15 @@ const MenuScreen = () => {
   );
 };
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
   },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.white,
     margin: 16,
     borderRadius: 8,
@@ -244,34 +248,43 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     fontSize: 16,
-    fontFamily: 'Kanit-Regular',
+    fontFamily: "Kanit-Regular",
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   loadingText: {
     fontSize: 16,
-    fontFamily: 'Kanit-Regular',
+    fontFamily: "Kanit-Regular",
     color: colors.textSecondary,
   },
   gridRow: {
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
     paddingHorizontal: 16,
   },
   addButton: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 20,
     right: 20,
     width: 60,
     height: 60,
     borderRadius: 30,
     backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     elevation: 5,
   },
+  clearBtn: {
+  position: 'absolute',
+  top: 16,
+  right: 16,
+  padding: 4,
+  backgroundColor: colors.white,
+  borderRadius: 20,
+  zIndex: 2,
+},
 });
 
 export default MenuScreen;

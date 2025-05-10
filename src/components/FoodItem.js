@@ -7,8 +7,7 @@ import colors from '../constants/colors';
 const FoodItem = ({ food, onConsume, onDelete, onToggleFavorite }) => {
   // Mapping ชื่อไฟล์รูปภาพเป็นผลลัพธ์ของ require
   const imageMap = {
-    'food1.jpg': require('../../assets/images/food1.jpg'),
-    'food2.jpg': require('../../assets/images/food2.jpg'),
+    'defaultFood.png': require('../../assets/images/defaultFood.png')
   };
 
   // ถ้า food.image เป็น URI (จากผู้ใช้เลือก) ให้ใช้ URI โดยตรง
@@ -17,7 +16,10 @@ const FoodItem = ({ food, onConsume, onDelete, onToggleFavorite }) => {
   if (food.image && food.image.startsWith('file://')) {
     imageSource = { uri: food.image };
   } else {
-    imageSource = food.image && imageMap[food.image] ? imageMap[food.image] : imageMap['food1.jpg'];
+    imageSource =
+  food.image && imageMap[food.image]
+    ? imageMap[food.image]
+    : imageMap['defaultFood.png'];
   }
 
   return (
