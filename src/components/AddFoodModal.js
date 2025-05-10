@@ -18,11 +18,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import colors from '../constants/colors';
 
-/**
- * Modal สำหรับเพิ่มเมนูอาหารใหม่
- * • ไม่บังคับเลือกรูป — ถ้าไม่เลือกจะใช้รูป defaultFood.png
- * • ไม่แก้ไข Style ใด ๆ จากไฟล์ต้นฉบับ
- */
+
 const AddFoodModal = ({ visible, onClose, onAddFood }) => {
   const [foodName, setFoodName] = useState('');
   const [sodiumAmount, setSodiumAmount] = useState('');
@@ -164,7 +160,7 @@ const AddFoodModal = ({ visible, onClose, onAddFood }) => {
   );
 };
 
-/* ---------- Style (เหมือนไฟล์ต้นฉบับ) ---------- */
+
 const styles = StyleSheet.create({
   centeredView: {
     flex: 1,

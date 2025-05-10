@@ -3,8 +3,6 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet } from 'react-native';
-
-// Import screens
 import ProfileScreen from '../screens/ProfileScreen';
 import MenuScreen from '../screens/MenuScreen';
 import DashboardScreen from '../screens/DashboardScreen';

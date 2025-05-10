@@ -5,13 +5,11 @@ import { formatSodiumAmount } from '../utils/sodiumCalculator';
 import colors from '../constants/colors';
 
 const FoodItem = ({ food, onConsume, onDelete, onToggleFavorite }) => {
-  // Mapping ชื่อไฟล์รูปภาพเป็นผลลัพธ์ของ require
   const imageMap = {
     'defaultFood.png': require('../../assets/images/defaultFood.png')
   };
 
   // ถ้า food.image เป็น URI (จากผู้ใช้เลือก) ให้ใช้ URI โดยตรง
-  // ถ้า food.image เป็นชื่อไฟล์ (จาก initialFoods) ให้ใช้ imageMap
   let imageSource;
   if (food.image && food.image.startsWith('file://')) {
     imageSource = { uri: food.image };
@@ -95,9 +93,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   buttonContainer: {
-    width: '100%', // ให้ปุ่มทั้งหมดอยู่ในขอบเขตของ container
+    width: '100%',
     alignItems: 'center',
-    gap: 8, // ระยะห่างระหว่างบรรทัด
+    gap: 8,
   },
   topRow: {
     flexDirection: 'row',
@@ -112,7 +110,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.border,
-    flex: 1, // ให้ปุ่มดาวขยายตามขนาดที่เหลือ
+    flex: 1,
     alignItems: 'center',
   },
   deleteButton: {
@@ -120,12 +118,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
-    flex: 1, // ให้ปุ่มถังขยะมีขนาดเท่ากับปุ่มดาว
+    flex: 1,
     alignItems: 'center',
   },
   fullWidthButton: {
-    flex: 0, // ปิดการยืดแบบ flex
-    width: '100%', // ถ้ามีเฉพาะปุ่มดาว ให้ยืดเต็มความกว้าง
+    flex: 0,
+    width: '100%',
   },
   consumeButton: {
     flexDirection: 'row',
@@ -135,7 +133,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
-    width: '100%', // ปุ่มบันทึกยืดเต็มความกว้าง
+    width: '100%',
   },
   consumeButtonText: {
     color: colors.white,

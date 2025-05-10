@@ -1,4 +1,4 @@
-// src/screens/MenuScreen.js – add missing handleConsume to resolve runtime error
+// src/screens/MenuScreen.js
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
@@ -23,9 +23,6 @@ import {
   addConsumption,
   getProfileData,
 } from '../utils/storage';
-
-/* เมนูเริ่มต้นว่าง 100% */
-const initialFoods = [];
 
 const MenuScreen = () => {
   const [foodItems, setFoodItems] = useState([]);
@@ -149,7 +146,6 @@ const MenuScreen = () => {
     }
   };
 
-  /* 👉 **เพิ่ม handler ที่หายไป** เพื่อแก้ Uncaught Error */
   const handleConsume = async food => {
     if (!profileData) {
       Alert.alert('ต้องตั้งค่าโปรไฟล์ก่อน', 'กรุณาตั้งค่าโปรไฟล์ของคุณที่หน้าโปรไฟล์ก่อนบันทึกการบริโภค');
@@ -170,7 +166,6 @@ const MenuScreen = () => {
     }
   };
 
-  /* ------------------------------- RENDER ------------------------------- */
   return (
     <SafeAreaView style={styles.container}>
       <TouchableOpacity style={styles.clearBtn} onPress={handleClearFoods}>

@@ -1,4 +1,4 @@
-// src/screens/ProfileScreen.js (updated)
+// src/screens/ProfileScreen.js
 import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
