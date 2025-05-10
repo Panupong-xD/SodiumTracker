@@ -55,7 +55,6 @@ const MenuScreen = () => {
           setFoodItems(updatedFoodItems);
           setFilteredItems(sortItems(updatedFoodItems)); // เรียงลำดับหลังโหลด
         } else {
-          console.log('Using initialFoods:', initialFoods);
           setFoodItems(initialFoods);
           setFilteredItems(sortItems(initialFoods));
           await saveFoodItems(initialFoods);

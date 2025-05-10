@@ -1,3 +1,4 @@
+// src/screens/ProfileScreen.js (updated)
 import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
@@ -17,8 +18,8 @@ import { calculateRecommendedSodium } from "../utils/sodiumCalculator";
 import colors from "../constants/colors";
 
 const ProfileScreen = () => {
+  /* ชื่อถูกถอดออกตามคำขอ  */
   const [profile, setProfile] = useState({
-    name: "",
     age: "",
     weight: "",
     height: "",
@@ -29,34 +30,28 @@ const ProfileScreen = () => {
   const [recommendedSodium, setRecommendedSodium] = useState(null);
   const [formSubmitted, setFormSubmitted] = useState(false);
 
-  // Retrieve saved profile data on component mount
+  /* โหลดโปรไฟล์ที่บันทึกไว้ */
   useEffect(() => {
     const loadProfile = async () => {
-      const savedProfile = await getProfileData();
-      if (savedProfile) {
-        setProfile(savedProfile);
-        const sodium = calculateRecommendedSodium(savedProfile);
+      const saved = await getProfileData();
+      if (saved) {
+        /* กรองชื่อออกหากเคยมีเก็บไว้ */
+        const { name, ...rest } = saved;
+        setProfile(rest);
+        const sodium = calculateRecommendedSodium(rest);
         setRecommendedSodium(sodium);
         setFormSubmitted(true);
       }
     };
-
     loadProfile();
   }, []);
 
   const handleInputChange = (field, value) => {
-    setProfile({
-      ...profile,
-      [field]: value,
-    });
+    setProfile({ ...profile, [field]: value });
   };
 
   const validateForm = () => {
-    if (!profile.name.trim()) {
-      Alert.alert("กรุณาระบุชื่อ");
-      return false;
-    }
-
+    /* ตรวจเฉพาะฟิลด์ที่จำเป็น  */
     if (
       !profile.age ||
       isNaN(profile.age) ||
@@ -95,19 +90,31 @@ const ProfileScreen = () => {
 
     try {
       const sodium = calculateRecommendedSodium(profile);
-
-      const updatedProfile = {
-        ...profile,
-        recommendedSodium: sodium, // เพิ่ม recommendedSodium เข้าไป!
-      };
+      const updatedProfile = { ...profile, recommendedSodium: sodium };
       await saveProfileData(updatedProfile);
       setRecommendedSodium(sodium);
       setFormSubmitted(true);
       Alert.alert("บันทึกข้อมูลสำเร็จ");
-    } catch (error) {
-      console.error("Error saving profile:", error);
+    } catch (err) {
+      console.error("Error saving profile:", err);
       Alert.alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
     }
+  };
+
+  const renderResult = () => {
+    if (!formSubmitted || !recommendedSodium) return null;
+    return (
+      <View style={styles.resultContainer}>
+        <Text style={styles.resultHeader}>ปริมาณโซเดียมที่แนะนำต่อวัน</Text>
+        <View style={styles.resultBox}>
+          <Text style={styles.resultValue}>{recommendedSodium}</Text>
+          <Text style={styles.resultUnit}>มิลลิกรัม</Text>
+        </View>
+        <Text style={styles.resultDescription}>
+          ปริมาณโซเดียมที่แนะนำสำหรับคุณตามระยะโรคไตที่ {profile.kidneyStage}
+        </Text>
+      </View>
+    );
   };
 
   return (
@@ -125,23 +132,14 @@ const ProfileScreen = () => {
           </View>
 
           <View style={styles.form}>
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>ชื่อ</Text>
-              <TextInput
-                style={styles.input}
-                value={profile.name}
-                onChangeText={(text) => handleInputChange("name", text)}
-                placeholder="กรุณาระบุชื่อ"
-              />
-            </View>
-
+            {/* อายุ + เพศ */}
             <View style={styles.formRow}>
               <View style={[styles.formGroup, styles.halfWidth]}>
                 <Text style={styles.label}>อายุ (ปี)</Text>
                 <TextInput
                   style={styles.input}
                   value={profile.age}
-                  onChangeText={(text) => handleInputChange("age", text)}
+                  onChangeText={(v) => handleInputChange("age", v)}
                   keyboardType="numeric"
                   placeholder="อายุ"
                 />
@@ -152,9 +150,7 @@ const ProfileScreen = () => {
                 <View style={styles.pickerContainer}>
                   <Picker
                     selectedValue={profile.gender}
-                    onValueChange={(value) =>
-                      handleInputChange("gender", value)
-                    }
+                    onValueChange={(v) => handleInputChange("gender", v)}
                     style={styles.picker}
                   >
                     <Picker.Item label="ชาย" value="male" />
@@ -164,13 +160,14 @@ const ProfileScreen = () => {
               </View>
             </View>
 
+            {/* น้ำหนัก + ส่วนสูง */}
             <View style={styles.formRow}>
               <View style={[styles.formGroup, styles.halfWidth]}>
                 <Text style={styles.label}>น้ำหนัก (กก.)</Text>
                 <TextInput
                   style={styles.input}
                   value={profile.weight}
-                  onChangeText={(text) => handleInputChange("weight", text)}
+                  onChangeText={(v) => handleInputChange("weight", v)}
                   keyboardType="numeric"
                   placeholder="น้ำหนัก"
                 />
@@ -181,21 +178,20 @@ const ProfileScreen = () => {
                 <TextInput
                   style={styles.input}
                   value={profile.height}
-                  onChangeText={(text) => handleInputChange("height", text)}
+                  onChangeText={(v) => handleInputChange("height", v)}
                   keyboardType="numeric"
                   placeholder="ส่วนสูง"
                 />
               </View>
             </View>
 
+            {/* ระยะ CKD */}
             <View style={styles.formGroup}>
               <Text style={styles.label}>ระยะของโรคไต</Text>
               <View style={styles.pickerContainer}>
                 <Picker
                   selectedValue={profile.kidneyStage}
-                  onValueChange={(value) =>
-                    handleInputChange("kidneyStage", value)
-                  }
+                  onValueChange={(v) => handleInputChange("kidneyStage", v)}
                   style={styles.picker}
                 >
                   <Picker.Item label="ระยะที่ 1" value="1" />
@@ -204,33 +200,17 @@ const ProfileScreen = () => {
                   <Picker.Item label="ระยะที่ 3b" value="3b" />
                   <Picker.Item label="ระยะที่ 4" value="4" />
                   <Picker.Item label="ระยะที่ 5" value="5" />
+                  <Picker.Item label="ระยะที่ 5 (ล้างไต)" value="5D" />
                 </Picker>
               </View>
             </View>
 
-            <TouchableOpacity
-              style={styles.submitButton}
-              onPress={handleSubmit}
-            >
+            <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
               <Text style={styles.submitButtonText}>บันทึกข้อมูล</Text>
             </TouchableOpacity>
           </View>
 
-          {formSubmitted && recommendedSodium && (
-            <View style={styles.resultContainer}>
-              <Text style={styles.resultHeader}>
-                ปริมาณโซเดียมที่แนะนำต่อวัน
-              </Text>
-              <View style={styles.resultBox}>
-                <Text style={styles.resultValue}>{recommendedSodium}</Text>
-                <Text style={styles.resultUnit}>มิลลิกรัม</Text>
-              </View>
-              <Text style={styles.resultDescription}>
-                ปริมาณโซเดียมที่แนะนำสำหรับคุณตามระยะโรคไตที่{" "}
-                {profile.kidneyStage}
-              </Text>
-            </View>
-          )}
+          {renderResult()}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -238,131 +218,28 @@ const ProfileScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  keyboardAvoidContainer: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-    padding: 16,
-  },
-  headerContainer: {
-    marginBottom: 24,
-  },
-  header: {
-    fontSize: 24,
-    fontFamily: "Kanit-Bold",
-    color: colors.textPrimary,
-    marginBottom: 8,
-  },
-  subheader: {
-    fontSize: 16,
-    fontFamily: "Kanit-Regular",
-    color: colors.textSecondary,
-  },
-  form: {
-    backgroundColor: colors.white,
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-    marginBottom: 20,
-  },
-  formGroup: {
-    marginBottom: 16,
-  },
-  formRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  halfWidth: {
-    width: "48%",
-  },
-  label: {
-    marginBottom: 8,
-    fontSize: 16,
-    fontFamily: "Kanit-Regular",
-    color: colors.textPrimary,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    fontFamily: "Kanit-Regular",
-    color: colors.textPrimary,
-  },
-  pickerContainer: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    overflow: "hidden",
-  },
-  picker: {
-    height: 50,
-  },
-  submitButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 8,
-    padding: 16,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  submitButtonText: {
-    color: colors.white,
-    fontSize: 16,
-    fontFamily: "Kanit-Bold",
-  },
-  resultContainer: {
-    backgroundColor: colors.white,
-    borderRadius: 12,
-    padding: 16,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-    marginBottom: 20,
-  },
-  resultHeader: {
-    fontSize: 18,
-    fontFamily: "Kanit-Bold",
-    color: colors.textPrimary,
-    marginBottom: 16,
-  },
-  resultBox: {
-    backgroundColor: colors.primaryLight,
-    borderRadius: 8,
-    padding: 16,
-    width: "100%",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  resultValue: {
-    fontSize: 32,
-    fontFamily: "Kanit-Bold",
-    color: colors.primary,
-  },
-  resultUnit: {
-    fontSize: 16,
-    fontFamily: "Kanit-Regular",
-    color: colors.primary,
-    marginTop: 4,
-  },
-  resultDescription: {
-    fontSize: 14,
-    fontFamily: "Kanit-Regular",
-    color: colors.textSecondary,
-    textAlign: "center",
-  },
+  container: { flex: 1, backgroundColor: colors.background },
+  keyboardAvoidContainer: { flex: 1 },
+  scrollView: { flex: 1, padding: 16 },
+  headerContainer: { marginBottom: 24 },
+  header: { fontSize: 24, fontFamily: "Kanit-Bold", color: colors.textPrimary, marginBottom: 8 },
+  subheader: { fontSize: 16, fontFamily: "Kanit-Regular", color: colors.textSecondary },
+  form: { backgroundColor: colors.white, borderRadius: 12, padding: 16, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2, marginBottom: 20 },
+  formGroup: { marginBottom: 16 },
+  formRow: { flexDirection: "row", justifyContent: "space-between" },
+  halfWidth: { width: "48%" },
+  label: { marginBottom: 8, fontSize: 16, fontFamily: "Kanit-Regular", color: colors.textPrimary },
+  input: { borderWidth: 1, borderColor: colors.border, borderRadius: 8, padding: 12, fontSize: 16, fontFamily: "Kanit-Regular", color: colors.textPrimary },
+  pickerContainer: { borderWidth: 1, borderColor: colors.border, borderRadius: 8, overflow: "hidden" },
+  picker: { height: 50 },
+  submitButton: { backgroundColor: colors.primary, borderRadius: 8, padding: 16, alignItems: "center", marginTop: 8 },
+  submitButtonText: { color: colors.white, fontSize: 16, fontFamily: "Kanit-Bold" },
+  resultContainer: { backgroundColor: colors.white, borderRadius: 12, padding: 16, alignItems: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2, marginBottom: 20 },
+  resultHeader: { fontSize: 18, fontFamily: "Kanit-Bold", color: colors.textPrimary, marginBottom: 16 },
+  resultBox: { backgroundColor: colors.primaryLight, borderRadius: 8, padding: 16, width: "100%", alignItems: "center", marginBottom: 16 },
+  resultValue: { fontSize: 32, fontFamily: "Kanit-Bold", color: colors.primary },
+  resultUnit: { fontSize: 16, fontFamily: "Kanit-Regular", color: colors.primary, marginTop: 4 },
+  resultDescription: { fontSize: 14, fontFamily: "Kanit-Regular", color: colors.textSecondary, textAlign: "center" },
 });
 
 export default ProfileScreen;

@@ -1,46 +1,84 @@
-/**
- * Calculate the recommended daily sodium intake based on user profile and kidney disease stage
- * @param {Object} profile User profile data
- * @returns {number} Recommended daily sodium intake in milligrams
- */
-export const calculateRecommendedSodium = (profile) => {
-  // Base sodium recommendation for general population (in mg)
-  const baseSodium = 2300;
-  
-  // Get kidney stage
-  const kidneyStage = profile.kidneyStage;
-  
-  // Adjust sodium recommendation based on kidney disease stage
-  switch (kidneyStage) {
-    case '1':
-      // Stage 1: Mild reduction (~10% reduction)
-      return 2000;
-    case '2':
-      // Stage 2: Moderate reduction (~20% reduction)
-      return 1800;
-    case '3a':
-      // Stage 3a: Significant reduction (~30% reduction)
-      return 1500;
-    case '3b':
-      // Stage 3b: Further significant reduction (~40% reduction)
-      return 1300;
-    case '4':
-      // Stage 4: Major reduction (~50% reduction)
-      return 1000;
-    case '5':
-      // Stage 5: Severe reduction (~60% reduction)
-      return 750;
-    default:
-      // Default to general recommendation
-      return baseSodium;
-  }
+// ตารางค่าโซเดียมพื้นฐาน (มก.)
+// -------------------------------
+const BASE_SODIUM_BY_STAGE = {
+  '1': 2300,
+  '2': 2000,
+  '3': 1800, // ครอบคลุม 3a, 3b ด้วย (ดูฟังก์ชัน mapStage)
+  '3a': 1800,
+  '3b': 1800,
+  '4': 1700,
+  '5': 1500, // ยังไม่ล้างไต
+  '5D': 1800, // ล้างไต
 };
 
-/**
- * Format sodium amount with appropriate unit
- * @param {number} amount Sodium amount in milligrams
- * @returns {string} Formatted sodium amount
- */
+// --------------------------
+// ตัวคูณตามช่วงอายุ
+// --------------------------
+const getAgeMultiplier = (ageNum) => {
+  if (ageNum < 18) return 0.8;
+  if (ageNum <= 50) return 1.0;
+  if (ageNum <= 70) return 0.9;
+  return 0.8; // >70
+};
+
+// --------------------------
+// ตัวคูณตามเพศ
+// --------------------------
+const getGenderMultiplier = (gender) => {
+  return gender === 'female' ? 0.9 : 1.0; // ค่าเริ่มต้น male = 1.0
+};
+
+// --------------------------
+// ตัวคูณตาม BMI
+// --------------------------
+const getBmiMultiplier = (weightKg, heightCm) => {
+  if (!weightKg || !heightCm) return 1.0; // fallback (ข้อมูลไม่ครบ)
+  const heightM = heightCm / 100;
+  const bmi = weightKg / (heightM ** 2);
+  if (bmi < 18.5) return 1.0;
+  if (bmi < 25) return 1.0;
+  if (bmi < 30) return 1.05;
+  return 1.1; // ≥ 30
+};
+
+// --------------------------
+// Map stage 3a / 3b → 3
+// --------------------------
+const mapStage = (stage) => {
+  if (stage === '3a' || stage === '3b') return '3';
+  return stage;
+};
+
+// ================================================================
+// ฟังก์ชันหลัก: คำนวณปริมาณโซเดียมที่แนะนำต่อวัน (มก.)
+// ================================================================
+export const calculateRecommendedSodium = (profile = {}) => {
+  // รับค่าโปรไฟล์ (อายุ, เพศ, น้ำหนัก, ส่วนสูง, ระยะโรคไต)
+  const {
+    age = 0,
+    gender = 'male',
+    weight = 0,
+    height = 0,
+    kidneyStage = '1',
+  } = profile;
+
+  // 1) ค่าโซเดียมพื้นฐาน
+  const stageKey = mapStage(kidneyStage);
+  const baseSodium = BASE_SODIUM_BY_STAGE[stageKey] ?? 2000;
+
+  // 2) ตัวคูณต่าง ๆ
+  const ageMult = getAgeMultiplier(parseInt(age, 10));
+  const genderMult = getGenderMultiplier(gender);
+  const bmiMult = getBmiMultiplier(parseFloat(weight), parseFloat(height));
+
+  // 3) คำนวณ
+  const recommended = Math.round(baseSodium * ageMult * genderMult * bmiMult);
+  return recommended;
+};
+
+// ================================================================
+// Utilities เดิม (ไม่แก้ไข)
+// ================================================================
 export const formatSodiumAmount = (amount) => {
   if (amount >= 1000) {
     return `${(amount / 1000).toFixed(1)} กรัม`;
@@ -48,15 +86,8 @@ export const formatSodiumAmount = (amount) => {
   return `${amount} มก.`;
 };
 
-/**
- * Calculate percentage of daily sodium intake
- * @param {number} amount Consumed sodium amount in milligrams
- * @param {number} recommendedAmount Recommended daily sodium intake
- * @returns {number} Percentage of daily intake
- */
 export const calculatePercentage = (amount, recommendedAmount) => {
   if (!recommendedAmount) return 0;
-  
   const percentage = (amount / recommendedAmount) * 100;
-  return Math.min(Math.round(percentage), 100); // Cap at 100%
+  return Math.min(Math.round(percentage), 100);
 };
