@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   View,
@@ -26,7 +26,7 @@ export default function DashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState(null);
   const [dailyData, setDailyData] = useState(null);
-  const [averageSodium, setAverageSodium] = useState(null); // เก็บค่าเฉลี่ย
+  const [averageSodium, setAverageSodium] = useState(null);
 
   const loadData = useCallback(async () => {
     try {

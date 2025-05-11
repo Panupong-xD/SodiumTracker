@@ -9,11 +9,6 @@ const CONSUMPTION_HISTORY_KEY  = '@kidney_tracker:consumption_history';
  */
 export const initializeStorage = async () => {
   try {
-    // Check if food items exist
-    const foodItems = await AsyncStorage.getItem(FOOD_ITEMS_KEY);
-    
-    // If no food items, we'll create them on first MenuScreen load
-    
     // Initialize empty consumption history if it doesn't exist
     const consumptionHistory = await AsyncStorage.getItem(CONSUMPTION_HISTORY_KEY);
     if (!consumptionHistory) {

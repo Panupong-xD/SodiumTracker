@@ -1,5 +1,4 @@
 // src/components/ConsumptionHistoryItem.js
-import React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { formatSodiumAmount } from '../utils/sodiumCalculator';
