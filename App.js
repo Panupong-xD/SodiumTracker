@@ -1,5 +1,5 @@
 import 'react-native-gesture-handler'; // <<<< ต้องใส่บรรทัดแรก
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from './src/navigation/AppNavigator';
 import { StatusBar } from 'expo-status-bar';
