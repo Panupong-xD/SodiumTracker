@@ -196,8 +196,7 @@ const ProfileScreen = () => {
                 >
                   <Picker.Item label="ระยะที่ 1" value="1" />
                   <Picker.Item label="ระยะที่ 2" value="2" />
-                  <Picker.Item label="ระยะที่ 3a" value="3a" />
-                  <Picker.Item label="ระยะที่ 3b" value="3b" />
+                  <Picker.Item label="ระยะที่ 3" value="3" />
                   <Picker.Item label="ระยะที่ 4" value="4" />
                   <Picker.Item label="ระยะที่ 5" value="5" />
                   <Picker.Item label="ระยะที่ 5 (ล้างไต)" value="5D" />
