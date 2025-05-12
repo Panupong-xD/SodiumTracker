@@ -93,25 +93,25 @@ const MenuScreen = () => {
     }
   };
 
-  const handleClearFoods = () => {
-    Alert.alert('ยืนยันลบเมนู', 'คุณต้องการลบรายการอาหารทั้งหมดหรือไม่?', [
-      { text: 'ยกเลิก', style: 'cancel' },
-      {
-        text: 'ลบ',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await saveFoodItems([]);
-            setFoodItems([]);
-            setFilteredItems([]);
-            Alert.alert('สำเร็จ', 'ลบเมนูทั้งหมดเรียบร้อยแล้ว');
-          } catch (err) {
-            Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถลบเมนูได้');
-          }
-        },
-      },
-    ]);
-  };
+  // const handleClearFoods = () => {
+  //   Alert.alert('ยืนยันลบเมนู', 'คุณต้องการลบรายการอาหารทั้งหมดหรือไม่?', [
+  //     { text: 'ยกเลิก', style: 'cancel' },
+  //     {
+  //       text: 'ลบ',
+  //       style: 'destructive',
+  //       onPress: async () => {
+  //         try {
+  //           await saveFoodItems([]);
+  //           setFoodItems([]);
+  //           setFilteredItems([]);
+  //           Alert.alert('สำเร็จ', 'ลบเมนูทั้งหมดเรียบร้อยแล้ว');
+  //         } catch (err) {
+  //           Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถลบเมนูได้');
+  //         }
+  //       },
+  //     },
+  //   ]);
+  // };
 
   const handleDeleteFood = async id => {
     Alert.alert('ยืนยันการลบ', 'คุณแน่ใจหรือไม่ว่าต้องการลบเมนูนี้?', [
@@ -168,9 +168,9 @@ const MenuScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <TouchableOpacity style={styles.clearBtn} onPress={handleClearFoods}>
+      {/* <TouchableOpacity style={styles.clearBtn} onPress={handleClearFoods}>
         <Ionicons name="trash-outline" size={24} color={colors.primary} />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       <View style={styles.searchContainer}>
         <Ionicons name="search" size={20} color={colors.textSecondary} style={styles.searchIcon} />

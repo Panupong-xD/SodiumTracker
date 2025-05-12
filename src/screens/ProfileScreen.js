@@ -1,4 +1,3 @@
-// src/screens/ProfileScreen.js
 import { useState, useEffect } from "react";
 import {
   StyleSheet,
@@ -18,9 +17,8 @@ import { calculateRecommendedSodium } from "../utils/sodiumCalculator";
 import colors from "../constants/colors";
 
 const ProfileScreen = () => {
-  /* ชื่อถูกถอดออกตามคำขอ  */
   const [profile, setProfile] = useState({
-    age: "",
+    age: "", // string เช่น "1-18", "18-50", "50-70", "70+"
     weight: "",
     height: "",
     kidneyStage: "1",
@@ -35,10 +33,14 @@ const ProfileScreen = () => {
     const loadProfile = async () => {
       const saved = await getProfileData();
       if (saved) {
-        /* กรองชื่อออกหากเคยมีเก็บไว้ */
         const { name, ...rest } = saved;
-        setProfile(rest);
-        const sodium = calculateRecommendedSodium(rest);
+        // แปลงอายุตัวเลขเก่า (ถ้ามมี) เป็นช่วงอายุ
+        const convertedProfile = {
+          ...rest,
+          age: convertLegacyAge(rest.age),
+        };
+        setProfile(convertedProfile);
+        const sodium = calculateRecommendedSodium(convertedProfile);
         setRecommendedSodium(sodium);
         setFormSubmitted(true);
       }
@@ -46,19 +48,23 @@ const ProfileScreen = () => {
     loadProfile();
   }, []);
 
+  // ฟังก์ชันแปลงอายุตัวเลขเก่าเป็นช่วงอายุ
+  const convertLegacyAge = (age) => {
+    if (!age || isNaN(age)) return "";
+    const ageNum = parseInt(age, 10);
+    if (ageNum <= 18) return "1-18";
+    if (ageNum <= 50) return "18-50";
+    if (ageNum <= 70) return "50-70";
+    return "70+"; // อายุมากกว่า 70 ปี
+  };
+
   const handleInputChange = (field, value) => {
     setProfile({ ...profile, [field]: value });
   };
 
   const validateForm = () => {
-    /* ตรวจเฉพาะฟิลด์ที่จำเป็น  */
-    if (
-      !profile.age ||
-      isNaN(profile.age) ||
-      parseInt(profile.age) <= 0 ||
-      parseInt(profile.age) > 120
-    ) {
-      Alert.alert("กรุณาระบุอายุที่ถูกต้อง (1-120 ปี)");
+    if (!profile.age) {
+      Alert.alert("กรุณาเลือกช่วงอายุ");
       return false;
     }
 
@@ -135,14 +141,21 @@ const ProfileScreen = () => {
             {/* อายุ + เพศ */}
             <View style={styles.formRow}>
               <View style={[styles.formGroup, styles.halfWidth]}>
-                <Text style={styles.label}>อายุ (ปี)</Text>
-                <TextInput
-                  style={styles.input}
-                  value={profile.age}
-                  onChangeText={(v) => handleInputChange("age", v)}
-                  keyboardType="numeric"
-                  placeholder="อายุ"
-                />
+                <Text style={styles.label}>ช่วงอายุ</Text>
+                <View style={styles.pickerContainer}>
+                  <Picker
+                    selectedValue={profile.age}
+                    onValueChange={(v) => handleInputChange("age", v)}
+                    style={styles.picker}
+                    accessibilityLabel="เลือกช่วงอายุ"
+                  >
+                    <Picker.Item label="เลือกช่วงอายุ" value="" />
+                    <Picker.Item label="1-18 ปี" value="1-18" />
+                    <Picker.Item label="18-50 ปี" value="18-50" />
+                    <Picker.Item label="50-70 ปี" value="50-70" />
+                    <Picker.Item label="มากกว่า 70 ปี" value="70+" />
+                  </Picker>
+                </View>
               </View>
 
               <View style={[styles.formGroup, styles.halfWidth]}>
@@ -152,6 +165,7 @@ const ProfileScreen = () => {
                     selectedValue={profile.gender}
                     onValueChange={(v) => handleInputChange("gender", v)}
                     style={styles.picker}
+                    accessibilityLabel="เลือกเพศ"
                   >
                     <Picker.Item label="ชาย" value="male" />
                     <Picker.Item label="หญิง" value="female" />
@@ -193,6 +207,7 @@ const ProfileScreen = () => {
                   selectedValue={profile.kidneyStage}
                   onValueChange={(v) => handleInputChange("kidneyStage", v)}
                   style={styles.picker}
+                  accessibilityLabel="เลือกระยะของโรคไต"
                 >
                   <Picker.Item label="ระยะที่ 1" value="1" />
                   <Picker.Item label="ระยะที่ 2" value="2" />
