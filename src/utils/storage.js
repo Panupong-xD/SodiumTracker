@@ -1,13 +1,13 @@
 // src/utils/storage.js
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const PROFILE_KEY              = '@kidney_tracker:profile';
-const FOOD_ITEMS_KEY           = '@kidney_tracker:food_items';
-const CONSUMPTION_HISTORY_KEY  = '@kidney_tracker:consumption_history';
+const PROFILE_KEY              = '@kidney_tracker:profile'; //ใช้เก็บ ข้อมูลโปรไฟล์ของผู้ใช้ -> อายุ เพศ น้ำหนัก ส่วนสูง ระยะของโรคไต
+const FOOD_ITEMS_KEY           = '@kidney_tracker:food_items'; //ใช้เก็บ รายการอาหารทั้งหมด ที่ผู้ใช้สร้างหรือเพิ่มไว้ เช่น { id: 'abc', name: 'ไข่ต้ม', sodium: 300 }
+const CONSUMPTION_HISTORY_KEY  = '@kidney_tracker:consumption_history'; //ใช้เก็บ ประวัติการบริโภคอาหารรายวันเพื่อให้แอปแสดงประวัติย้อนหลังหรือกราฟได้ เช่น วันที่ 2025-05-15 กินไข่ต้ม 1 ฟอง 
 
 //initializeStorage – ตั้งค่าข้อมูลเริ่มต้น ถ้ายังไม่มี
 export const initializeStorage = async () => { // สร้างฟังก์ชันแบบ async ชื่อ initializeStorage
-  try { // เริ่มบล็อกดักจับข้อผิดพลาด
+  try {
     const consumptionHistory = await AsyncStorage.getItem(CONSUMPTION_HISTORY_KEY); // อ่านข้อมูล consumption history จาก storage
 
     if (!consumptionHistory) { // ถ้าไม่มีข้อมูล (เป็น null หรือ undefined)
@@ -23,7 +23,7 @@ export const initializeStorage = async () => { // สร้างฟังก์
 //saveProfileData – บันทึกข้อมูลโปรไฟล์ผู้ใช้
 export const saveProfileData = async (profileData) => { // ฟังก์ชันบันทึกข้อมูลโปรไฟล์ รับ profileData เป็นพารามิเตอร์
   try {
-    const jsonValue = JSON.stringify(profileData); // แปลง profileData เป็นข้อความ JSON
+    const jsonValue = JSON.stringify(profileData); // แปลง profileData(js object) เป็น JSON
     await AsyncStorage.setItem(PROFILE_KEY, jsonValue); // เซฟข้อมูลไปยังคีย์ PROFILE_KEY
   } catch (error) {
     console.error('Error saving profile data:', error); // แจ้งข้อผิดพลาด

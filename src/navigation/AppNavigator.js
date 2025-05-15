@@ -1,6 +1,6 @@
-import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
+import { NavigationContainer } from '@react-navigation/native'; //ใช้ครอบตัวแอป เพื่อเปิดใช้งานระบบนำทาง (navigation)
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'; //ใช้สร้างเมนูแถบล่าง (Tab bar)
+import { Ionicons } from '@expo/vector-icons'; //ใช้แสดงไอคอนในแถบเมนู เช่น ไอคอนคน, ประวัติ
 import { StyleSheet } from 'react-native';
 import ProfileScreen from '../screens/ProfileScreen';
 import MenuScreen from '../screens/MenuScreen';
@@ -12,13 +12,14 @@ const Tab = createBottomTabNavigator();
 
 export default function AppNavigator() {
   return (
+    // ครอบทั้งหมดเพื่อเปิดระบบ navigation
     <NavigationContainer>
-      <Tab.Navigator
+      <Tab.Navigator //ใช้แสดงเมนูแถบล่างแบบแท็บ
         screenOptions={({ route }) => ({
           tabBarIcon: ({ focused, color, size }) => {
             let iconName;
 
-            if (route.name === 'โปรไฟล์') {
+            if (route.name === 'โปรไฟล์') { //ดึงชื่อมาจาก Tab.screen
               iconName = focused ? 'person' : 'person-outline';
             } else if (route.name === 'เมนูอาหาร') {
               iconName = focused ? 'restaurant' : 'restaurant-outline';
@@ -38,11 +39,11 @@ export default function AppNavigator() {
           headerTitleStyle: styles.headerTitle,
         })}
       >
-        <Tab.Screen 
+        <Tab.Screen // Tab.Screen มี 4 อันสำหรับแต่ละหน้าในแอป
           name="โปรไฟล์" 
           component={ProfileScreen} 
           options={{
-            title: "โปรไฟล์ผู้ใช้"
+            title: "โปรไฟล์ผู้ใช้" //แถบด้านบน
           }}
         />
         <Tab.Screen 

@@ -10,7 +10,7 @@ import {
   Platform,
   Alert,
 } from "react-native";
-import { Picker } from "@react-native-picker/picker";
+import { Picker } from "@react-native-picker/picker"; //dropdown
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getProfileData, saveProfileData } from "../utils/storage";
 import { calculateRecommendedSodium } from "../utils/sodiumCalculator";
@@ -18,7 +18,7 @@ import colors from "../constants/colors";
 
 const ProfileScreen = () => {
   const [profile, setProfile] = useState({
-    age: "", // string เช่น "1-18", "18-50", "50-70", "70+"
+    age: "",
     weight: "",
     height: "",
     kidneyStage: "1",
@@ -31,18 +31,16 @@ const ProfileScreen = () => {
   /* โหลดโปรไฟล์ที่บันทึกไว้ */
   useEffect(() => {
     const loadProfile = async () => {
-      const saved = await getProfileData();
+      const saved = await getProfileData(); //เมื่อ component โหลด จะดึงข้อมูลที่เคยเก็บไว้จาก storage.js
       if (saved) {
-        const { name, ...rest } = saved;
-        // แปลงอายุตัวเลขเก่า (ถ้ามมี) เป็นช่วงอายุ
         const convertedProfile = {
-          ...rest,
-          age: convertLegacyAge(rest.age),
+          ...saved,
+          age: convertLegacyAge(saved.age), //เอาข้อมูลที่ได้มา แปลงอายุให้เป็นช่วง
         };
-        setProfile(convertedProfile);
-        const sodium = calculateRecommendedSodium(convertedProfile);
-        setRecommendedSodium(sodium);
-        setFormSubmitted(true);
+        setProfile(convertedProfile); //อัปเดต state เพื่อให้แสดงใน UI
+        const sodium = calculateRecommendedSodium(convertedProfile); //คำนวณโซเดียมที่แนะนำตามสูตร
+        setRecommendedSodium(sodium); //เก็บค่าโซเดียมไว้แสดงผล
+        setFormSubmitted(true); //ให้แสดงผลลัพธ์ว่า “เคยบันทึกแล้ว”
       }
     };
     loadProfile();
@@ -62,7 +60,7 @@ const ProfileScreen = () => {
     setProfile({ ...profile, [field]: value });
   };
 
-  const validateForm = () => {
+  const validateForm = () => { //เช็คว่าใส่ข้อมูลยัง
     if (!profile.age) {
       Alert.alert("กรุณาเลือกช่วงอายุ");
       return false;
@@ -82,7 +80,7 @@ const ProfileScreen = () => {
       !profile.height ||
       isNaN(profile.height) ||
       parseInt(profile.height) <= 0 ||
-      parseInt(profile.height) > 250
+      parseInt(profile.height) > 250    
     ) {
       Alert.alert("กรุณาระบุส่วนสูงที่ถูกต้อง (1-250 ซม.)");
       return false;
@@ -219,7 +217,10 @@ const ProfileScreen = () => {
               </View>
             </View>
 
-            <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+            <TouchableOpacity
+              style={styles.submitButton}
+              onPress={handleSubmit}
+            >
               <Text style={styles.submitButtonText}>บันทึกข้อมูล</Text>
             </TouchableOpacity>
           </View>
@@ -236,24 +237,108 @@ const styles = StyleSheet.create({
   keyboardAvoidContainer: { flex: 1 },
   scrollView: { flex: 1, padding: 16 },
   headerContainer: { marginBottom: 24 },
-  header: { fontSize: 24, fontFamily: "Kanit-Bold", color: colors.textPrimary, marginBottom: 8 },
-  subheader: { fontSize: 16, fontFamily: "Kanit-Regular", color: colors.textSecondary },
-  form: { backgroundColor: colors.white, borderRadius: 12, padding: 16, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2, marginBottom: 20 },
+  header: {
+    fontSize: 24,
+    fontFamily: "Kanit-Bold",
+    color: colors.textPrimary,
+    marginBottom: 8,
+  },
+  subheader: {
+    fontSize: 16,
+    fontFamily: "Kanit-Regular",
+    color: colors.textSecondary,
+  },
+  form: {
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    marginBottom: 20,
+  },
   formGroup: { marginBottom: 16 },
   formRow: { flexDirection: "row", justifyContent: "space-between" },
   halfWidth: { width: "48%" },
-  label: { marginBottom: 8, fontSize: 16, fontFamily: "Kanit-Regular", color: colors.textPrimary },
-  input: { borderWidth: 1, borderColor: colors.border, borderRadius: 8, padding: 12, fontSize: 16, fontFamily: "Kanit-Regular", color: colors.textPrimary },
-  pickerContainer: { borderWidth: 1, borderColor: colors.border, borderRadius: 8, overflow: "hidden" },
+  label: {
+    marginBottom: 8,
+    fontSize: 16,
+    fontFamily: "Kanit-Regular",
+    color: colors.textPrimary,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    fontFamily: "Kanit-Regular",
+    color: colors.textPrimary,
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    overflow: "hidden",
+  },
   picker: { height: 50 },
-  submitButton: { backgroundColor: colors.primary, borderRadius: 8, padding: 16, alignItems: "center", marginTop: 8 },
-  submitButtonText: { color: colors.white, fontSize: 16, fontFamily: "Kanit-Bold" },
-  resultContainer: { backgroundColor: colors.white, borderRadius: 12, padding: 16, alignItems: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2, marginBottom: 20 },
-  resultHeader: { fontSize: 18, fontFamily: "Kanit-Bold", color: colors.textPrimary, marginBottom: 16 },
-  resultBox: { backgroundColor: colors.primaryLight, borderRadius: 8, padding: 16, width: "100%", alignItems: "center", marginBottom: 16 },
-  resultValue: { fontSize: 32, fontFamily: "Kanit-Bold", color: colors.primary },
-  resultUnit: { fontSize: 16, fontFamily: "Kanit-Regular", color: colors.primary, marginTop: 4 },
-  resultDescription: { fontSize: 14, fontFamily: "Kanit-Regular", color: colors.textSecondary, textAlign: "center" },
+  submitButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+    padding: 16,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  submitButtonText: {
+    color: colors.white,
+    fontSize: 16,
+    fontFamily: "Kanit-Bold",
+  },
+  resultContainer: {
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    marginBottom: 20,
+  },
+  resultHeader: {
+    fontSize: 18,
+    fontFamily: "Kanit-Bold",
+    color: colors.textPrimary,
+    marginBottom: 16,
+  },
+  resultBox: {
+    backgroundColor: colors.primaryLight,
+    borderRadius: 8,
+    padding: 16,
+    width: "100%",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  resultValue: {
+    fontSize: 32,
+    fontFamily: "Kanit-Bold",
+    color: colors.primary,
+  },
+  resultUnit: {
+    fontSize: 16,
+    fontFamily: "Kanit-Regular",
+    color: colors.primary,
+    marginTop: 4,
+  },
+  resultDescription: {
+    fontSize: 14,
+    fontFamily: "Kanit-Regular",
+    color: colors.textSecondary,
+    textAlign: "center",
+  },
 });
 
 export default ProfileScreen;
