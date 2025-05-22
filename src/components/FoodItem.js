@@ -104,7 +104,9 @@ const styles = StyleSheet.create({
   },
   favoriteButton: {
     backgroundColor: colors.white,
-    paddingHorizontal: 12,
+    paddingHorizontal: 
+    
+    12,
     paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,

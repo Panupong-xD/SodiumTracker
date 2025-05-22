@@ -15,6 +15,8 @@ import { Ionicons } from '@expo/vector-icons';
 import colors from '../constants/colors';
 import FoodItem from '../components/FoodItem';
 import AddFoodModal from '../components/AddFoodModal';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 
 import {
   getFoodItems,
@@ -36,10 +38,10 @@ const MenuScreen = () => {
     const loadData = async () => {
       try {
         const saved = await getFoodItems();
-        if (saved && saved.length) {
-          const merged = saved.map(it => ({ ...it, isFavorite: it.isFavorite ?? false }));
+        if (saved && saved.length) { //เช็กว่า saved ไม่ใช่ null และมีอย่างน้อย 1 รายการ
+          const merged = saved.map(it => ({ ...it, isFavorite: it.isFavorite ?? false })); //เพิ่ม isFavorite: false
           setFoodItems(merged);
-          setFilteredItems(sortItems(merged));
+          setFilteredItems(sortItems(merged)); //เรียก sortItems() เพื่อจัดลำดับใหม่ โดยเอา favorite ขึ้นบนก่อน แล้วเก็บไว้ใน filteredItems
         } else {
           setFoodItems([]);
           setFilteredItems([]);
@@ -144,6 +146,16 @@ const MenuScreen = () => {
       Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถบันทึกการบริโภคได้');
     }
   };
+
+  useFocusEffect(
+  useCallback(() => {
+    const fetchProfile = async () => {
+      const profile = await getProfileData();
+      setProfileData(profile);
+    };
+    fetchProfile();
+  }, [])
+);
 
   return (
     <SafeAreaView style={styles.container}>

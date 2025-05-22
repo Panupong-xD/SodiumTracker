@@ -28,15 +28,29 @@ export default function DashboardScreen() {
   const [dailyData, setDailyData] = useState(null);
   const [averageSodium, setAverageSodium] = useState(null);
 
+  const getSodiumAdvice = (pct, rec) => {
+    if (pct < 25)
+      return `⚠️ โซเดียมต่ำมาก (≈${pct}% ของ ${rec} มก.)\n• สังเกตอาการวิงเวียน‑อ่อนแรง\n• เติมเกลือเล็กน้อยในมื้อถัดไปหรือเลือกโปรตีนธรรมชาติ เช่น ปลา\n• หากมีอาการผิดปกติให้ปรึกษาแพทย์`;
+    if (pct < 75)
+      return `โซเดียมยังต่ำกว่าที่แนะนำ (≈${pct}%)\n• เพิ่มแหล่งโซเดียมคุณภาพ เช่น ไข่ นมพร่องมันเนย`;
+    if (pct < 115)
+      return `✅ อยู่ในเกณฑ์เหมาะสม\n• รักษาพฤติกรรมอาหารสด ลดซอสเค็ม\n• ดื่มน้ำตามปกติ`;
+    if (pct <= 175)
+      return `⚠️ โซเดียมสูงกว่าแนะนำ (≈${pct}%)\n• ลด/งดอาหารแปรรูป‑เค็มตลอดวัน\n• ดื่มน้ำสะอาดเพิ่ม (ภายใต้คำแนะนำแพทย์)`;
+    return `🚨 โซเดียมเกินขั้นอันตราย (>175%)\n• งดเกลือและของเค็มทันที\n• เช็กความดัน/อาการบวม\n• พบแพทย์ด่วนหากมีอาการหนัก`;
+  };
+
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const history = await getConsumptionHistory();
-      const profileData = await getProfileData();
+      const [history, profileData] = await Promise.all([
+        getConsumptionHistory(),
+        getProfileData(),
+      ]);
       setConsumptionData(history || []);
       setProfile(profileData);
-    } catch (error) {
-      console.error('Error loading dashboard data:', error);
+    } catch (err) {
+      console.error(err);
       Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลแดชบอร์ดได้');
     } finally {
       setLoading(false);
@@ -59,17 +73,15 @@ export default function DashboardScreen() {
     } else {
       setChartData({ labels: [], datasets: [{ data: [] }] });
       setDailyData(null);
-      setAverageSodium(null); // รีเซ็ตค่าเฉลี่ยเมื่อไม่มีข้อมูล
+      setAverageSodium(null);
     }
   }, [consumptionData, period]);
 
   const processData = () => {
-    // Sort by timestamp
     const sortedData = [...consumptionData].sort(
       (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
     );
 
-    // Group by day
     const groupedByDay = sortedData.reduce((acc, item) => {
       const date = new Date(item.timestamp);
       const key = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
@@ -84,9 +96,8 @@ export default function DashboardScreen() {
 
     let labels = [];
     let dataPoints = [];
-    let recommendedData = []; // เพิ่ม dataset สำหรับเส้นแนวนอน
+    let recommendedData = [];
 
-    // ดึงปริมาณโซเดียมที่แนะนำ
     const recommendedSodium = parseInt(profile?.recommendedSodium, 10) || 2000;
 
     if (period === 'weekly') {
@@ -96,9 +107,8 @@ export default function DashboardScreen() {
         return `${date.getDate()}/${date.getMonth() + 1}`;
       });
       dataPoints = last7.map(d => groupedByDay[d]?.totalSodium || 0);
-      recommendedData = Array(last7.length).fill(recommendedSodium); // เส้นแนวนอนที่ recommendedSodium
+      recommendedData = Array(last7.length).fill(recommendedSodium);
 
-      // คำนวณค่าเฉลี่ยโซเดียมต่อวันใน 7 วันล่าสุด (เฉพาะวันที่บันทึก)
       const recordedDays = last7
         .map(date => dailyArray.find(item => item.date === date))
         .filter(item => item && item.totalSodium > 0);
@@ -123,18 +133,16 @@ export default function DashboardScreen() {
     
         monthData.push(dayData ? dayData.totalSodium : 0);
     
-        // ใส่ label เฉพาะวันที่หาร 5 ลงตัว (5,10,15,20,25,30)
         if (i % 5 === 0 || i === daysInMonth) {
           labels.push(i.toString());
         } else {
-          labels.push(''); // วันที่ไม่หาร 5 ลงตัว ให้ label ว่าง
+          labels.push('');
         }
       }
     
       dataPoints = monthData;
-      recommendedData = Array(monthData.length).fill(recommendedSodium); // เส้นแนวนอนที่ recommendedSodium
+      recommendedData = Array(monthData.length).fill(recommendedSodium);
 
-      // คำนวณค่าเฉลี่ยโซเดียมต่อวัน (เฉพาะวันที่บันทึก)
       const recordedDays = dailyArray.filter(item => {
         const [year, month] = item.date.split('-').map(Number);
         return year === currentYear && month === currentMonth + 1 && item.totalSodium > 0;
@@ -159,9 +167,8 @@ export default function DashboardScreen() {
       });
       labels = monthNames;
       dataPoints = yearData;
-      recommendedData = []; // ไม่แสดงเส้นแนวนอนในกราฟรายปี
+      recommendedData = [];
 
-      // คำนวณค่าเฉลี่ยโซเดียมต่อวันของทั้งปี (เฉพาะวันที่บันทึก)
       const recordedDays = dailyArray.filter(item => {
         const [y] = item.date.split('-').map(Number);
         return y === year && item.totalSodium > 0;
@@ -169,13 +176,9 @@ export default function DashboardScreen() {
     
       if (recordedDays.length > 0) {
         const totalSodium = recordedDays.reduce((sum, item) => sum + item.totalSodium, 0);
-        const averageDailySodium = totalSodium / recordedDays.length; // ค่าเฉลี่ยโซเดียมต่อวัน
-    
-        // คำนวณจำนวนวันเฉลี่ยต่อเดือนในปีนั้น
-        const daysInYear = new Date(year, 12, 0).getDate() === 31 ? 365 : 366; // ตรวจสอบว่าปีนั้นมี 365 หรือ 366 วัน
-        const averageDaysPerMonth = daysInYear / 12; // จำนวนวันเฉลี่ยต่อเดือน
-    
-        // ค่าเฉลี่ยโซเดียมต่อเดือน = ค่าเฉลี่ยต่อวัน * จำนวนวันเฉลี่ยต่อเดือน
+        const averageDailySodium = totalSodium / recordedDays.length;
+        const daysInYear = new Date(year, 12, 0).getDate() === 31 ? 365 : 366;
+        const averageDaysPerMonth = daysInYear / 12;
         const averageMonthlySodium = Math.round(averageDailySodium * averageDaysPerMonth);
         setAverageSodium({ type: 'monthly', value: averageMonthlySodium });
       } else {
@@ -183,14 +186,13 @@ export default function DashboardScreen() {
       }
     }
 
-    // เพิ่ม dataset สำหรับเส้นแนวนอน (เฉพาะ weekly และ monthly)
     const datasets = [
-      { data: dataPoints, color: (opacity = 1) => `rgba(12,97,112,${opacity})` }, // เส้นข้อมูลหลัก
+      { data: dataPoints, color: (opacity = 1) => `rgba(12,97,112,${opacity})` },
     ];
     if (recommendedData.length > 0) {
       datasets.push({
         data: recommendedData,
-        color: (opacity = 1) => `rgba(255,0,0,${opacity})`, // เส้นสีแดง
+        color: (opacity = 1) => `rgba(255,0,0,${opacity})`,
         strokeWidth: 2,
         withDots: false,
       });
@@ -221,31 +223,31 @@ export default function DashboardScreen() {
     if (percentage < 25) {
       return {
         message: 'โซเดียมน้อยเกินไป๊',
-        color: '#FFC107', // เขียวเข้ม
+        color: '#FFC107',
         emoji: '😵‍💫',
       };
     } else if (percentage >= 25 && percentage < 75) {
       return {
         message: 'โซเดียมน้อยไปหน่อยนะ',
-        color: '#85C17E', // เขียวอ่อน
+        color: '#85C17E',
         emoji: '😐',
       };
     } else if (percentage >= 75 && percentage < 115) {
       return {
         message: 'โซเดียมอยู่ในเกณฑ์ดีเยี่ยม',
-        color: '#28A745', // เหลือง
+        color: '#28A745',
         emoji: '😀',
       };
     } else if (percentage >= 115 && percentage <= 175) {
       return {
         message: 'โซเดียมสูงไปแล้วนะ',
-        color: '#FF851B', // ส้ม
+        color: '#FF851B',
         emoji: '😟',
       };
     } else {
       return {
         message: 'โซเดียมสูงเกิ๊นอันตรายสุดๆ',
-        color: '#DC3545', // แดง
+        color: '#DC3545',
         emoji: '😵',
       };
     }
@@ -263,9 +265,10 @@ export default function DashboardScreen() {
     }
     const recommended = parseInt(profile.recommendedSodium, 10) || 2000;
     const todayConsumption = getTodayConsumption();
-    const percentage = Math.round((todayConsumption / recommended) * 100); // คำนวณ % แบบไม่ตัน
-    const progressWidth = Math.min(percentage, 100); // หลอดตันที่ 100%
-    const sodiumStatus = getSodiumStatus(percentage); // ดึงสถานะโซเดียม
+    const percentage = Math.round((todayConsumption / recommended) * 100);
+    const progressWidth = Math.min(percentage, 100);
+    const sodiumStatus = getSodiumStatus(percentage);
+    const pctToday = Math.round((getTodayConsumption() / recommended) * 100);
 
     return (
       <View style={styles.summaryContainer}>
@@ -296,6 +299,11 @@ export default function DashboardScreen() {
             <Text style={styles.sodiumLabel}>ปริมาณที่แนะนำ</Text>
             <Text style={styles.sodiumValue}>{recommended} มก.</Text>
           </View>
+        </View>
+        {/* Moved advice section here */}
+        <View style={{ backgroundColor: '#FFF', padding: 16, borderRadius: 12, marginTop: 16 }}>
+          <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 6 }}>คำแนะนำประจำวัน</Text>
+          <Text style={{ lineHeight: 22 }}>{getSodiumAdvice(pctToday, recommended)}</Text>
         </View>
       </View>
     );
@@ -343,7 +351,7 @@ export default function DashboardScreen() {
                       backgroundGradientFrom: colors.white,
                       backgroundGradientTo: colors.white,
                       decimalPlaces: 0,
-                      color: (opacity = 1) => `rgba(12,97,112,${opacity})`, // สีเส้นหลัก
+                      color: (opacity = 1) => `rgba(12,97,112,${opacity})`,
                       labelColor: (opacity = 1) => `rgba(0,0,0,${opacity})`,
                       style: { borderRadius: 16 },
                       propsForDots: { r: '4', strokeWidth: '2', stroke: colors.primary },

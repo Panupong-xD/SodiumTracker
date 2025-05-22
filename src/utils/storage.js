@@ -20,52 +20,50 @@ export const initializeStorage = async () => { // สร้างฟังก์
 };
 
 
-//saveProfileData – บันทึกข้อมูลโปรไฟล์ผู้ใช้
+// saveProfileData – บันทึกข้อมูลโปรไฟล์ผู้ใช้
 export const saveProfileData = async (profileData) => { // ฟังก์ชันบันทึกข้อมูลโปรไฟล์ รับ profileData เป็นพารามิเตอร์
   try {
-    const jsonValue = JSON.stringify(profileData); // แปลง profileData(js object) เป็น JSON
-    await AsyncStorage.setItem(PROFILE_KEY, jsonValue); // เซฟข้อมูลไปยังคีย์ PROFILE_KEY
+    const jsonValue = JSON.stringify(profileData); // แปลง profileData (JavaScript object) เป็น string ในรูปแบบ JSON
+    await AsyncStorage.setItem(PROFILE_KEY, jsonValue); // เซฟ string นี้ลงในคีย์ PROFILE_KEY
   } catch (error) {
-    console.error('Error saving profile data:', error); // แจ้งข้อผิดพลาด
-    throw error; // โยน error กลับ
+    console.error('Error saving profile data:', error); // แสดงข้อผิดพลาดบน console
+    throw error; // โยน error กลับไปให้ผู้เรียกจัดการ
   }
 };
-
 
 // getProfileData – ดึงข้อมูลโปรไฟล์ผู้ใช้
 export const getProfileData = async () => { // ฟังก์ชันดึงข้อมูลโปรไฟล์
   try {
-    const jsonValue = await AsyncStorage.getItem(PROFILE_KEY); // อ่านข้อมูลจาก PROFILE_KEY
-    return jsonValue != null ? JSON.parse(jsonValue) : null; // ถ้ามีข้อมูลแปลงเป็น object แล้วส่งคืน ถ้าไม่มีส่งคืน null
+    const jsonValue = await AsyncStorage.getItem(PROFILE_KEY); // อ่าน string จากคีย์ PROFILE_KEY
+    return jsonValue != null ? JSON.parse(jsonValue) : null; // ถ้ามี string → แปลงกลับเป็น object แล้วคืนค่า, ถ้าไม่มี → คืน null
   } catch (error) {
-    console.error('Error getting profile data:', error); // แจ้งข้อผิดพลาด
-    throw error; // โยน error กลับ
+    console.error('Error getting profile data:', error); // แสดงข้อผิดพลาดบน console
+    throw error;
   }
 };
 
-
-//saveFoodItems – บันทึกรายการอาหาร
+// saveFoodItems – บันทึกรายการอาหาร
 export const saveFoodItems = async (foodItems) => { // ฟังก์ชันบันทึกรายการอาหาร รับ foodItems เป็นพารามิเตอร์
   try {
-    const jsonValue = JSON.stringify(foodItems); // แปลงรายการอาหารเป็น JSON
-    await AsyncStorage.setItem(FOOD_ITEMS_KEY, jsonValue); // เซฟลงคีย์ FOOD_ITEMS_KEY
+    const jsonValue = JSON.stringify(foodItems); // แปลง foodItems (JavaScript array) เป็น string ในรูปแบบ JSON
+    await AsyncStorage.setItem(FOOD_ITEMS_KEY, jsonValue); // เซฟ string นี้ลงในคีย์ FOOD_ITEMS_KEY
   } catch (error) {
-    console.error('Error saving food items:', error); // แจ้งข้อผิดพลาด
-    throw error; // โยน error กลับ
+    console.error('Error saving food items:', error);
+    throw error;
   }
 };
 
-
-//getFoodItems – ดึงรายการอาหาร
+// getFoodItems – ดึงรายการอาหาร
 export const getFoodItems = async () => { // ฟังก์ชันดึงรายการอาหาร
   try {
-    const jsonValue = await AsyncStorage.getItem(FOOD_ITEMS_KEY); // อ่านข้อมูลจาก FOOD_ITEMS_KEY
-    return jsonValue != null ? JSON.parse(jsonValue) : null; // ถ้ามีข้อมูลแปลงเป็น array แล้วส่งคืน ถ้าไม่มีส่งคืน null
+    const jsonValue = await AsyncStorage.getItem(FOOD_ITEMS_KEY); // อ่าน string จากคีย์ FOOD_ITEMS_KEY
+    return jsonValue != null ? JSON.parse(jsonValue) : null; // ถ้ามี string → แปลงกลับเป็น array แล้วคืนค่า, ถ้าไม่มี → คืน null
   } catch (error) {
-    console.error('Error getting food items:', error); // แจ้งข้อผิดพลาด
-    throw error; // โยน error กลับ
+    console.error('Error getting food items:', error);
+    throw error;
   }
 };
+
 
 
 //addConsumption – เพิ่มรายการประวัติการบริโภค

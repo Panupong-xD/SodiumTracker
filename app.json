@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "CPE121project",
+    "name": "KidneyCare",
     "slug": "CPE121project",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -9,15 +9,18 @@
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
+      "resizeMode": "cover",
       "backgroundColor": "#ffffff"
     },
     "ios": {
       "supportsTablet": true
     },
     "android": {
+      "package": "com.yourapp.identifier",
+      "versionCode": 1,
+      "permissions": [],
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/adaptive-icon-v2.png",
         "backgroundColor": "#ffffff"
       }
     },
@@ -26,6 +29,11 @@
     },
     "plugins": [
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "110fb168-9af9-472a-81ed-6d7b58bbc4c0"
+      }
+    }
   }
 }
