@@ -38,10 +38,10 @@ const MenuScreen = () => {
     const loadData = async () => {
       try {
         const saved = await getFoodItems();
-        if (saved && saved.length) { //เช็กว่า saved ไม่ใช่ null และมีอย่างน้อย 1 รายการ
-          const merged = saved.map(it => ({ ...it, isFavorite: it.isFavorite ?? false })); //เพิ่ม isFavorite: false
+        if (saved && saved.length) {
+          const merged = saved.map(it => ({ ...it, isFavorite: it.isFavorite ?? false }));
           setFoodItems(merged);
-          setFilteredItems(sortItems(merged)); //เรียก sortItems() เพื่อจัดลำดับใหม่ โดยเอา favorite ขึ้นบนก่อน แล้วเก็บไว้ใน filteredItems
+          setFilteredItems(sortItems(merged));
         } else {
           setFoodItems([]);
           setFilteredItems([]);
@@ -147,7 +147,7 @@ const MenuScreen = () => {
     }
   };
 
-  useFocusEffect(
+useFocusEffect(
   useCallback(() => {
     const fetchProfile = async () => {
       const profile = await getProfileData();

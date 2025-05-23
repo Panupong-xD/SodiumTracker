@@ -31,16 +31,16 @@ const ProfileScreen = () => {
   /* โหลดโปรไฟล์ที่บันทึกไว้ */
   useEffect(() => {
     const loadProfile = async () => {
-      const saved = await getProfileData(); //เมื่อ component โหลด จะดึงข้อมูลที่เคยเก็บไว้จาก storage.js
+      const saved = await getProfileData();
       if (saved) {
         const convertedProfile = {
           ...saved,
-          age: convertLegacyAge(saved.age), //เอาข้อมูลที่ได้มา แปลงอายุให้เป็นช่วง
+          age: convertLegacyAge(saved.age),
         };
-        setProfile(convertedProfile); //อัปเดต state เพื่อให้แสดงใน UI
-        const sodium = calculateRecommendedSodium(convertedProfile); //คำนวณโซเดียมที่แนะนำตามสูตร
-        setRecommendedSodium(sodium); //เก็บค่าโซเดียมไว้แสดงผล
-        setFormSubmitted(true); //ให้แสดงผลลัพธ์ว่า “เคยบันทึกแล้ว”
+        setProfile(convertedProfile);
+        const sodium = calculateRecommendedSodium(convertedProfile);
+        setRecommendedSodium(sodium);
+        setFormSubmitted(true);
       }
     };
     loadProfile();
@@ -91,7 +91,6 @@ const ProfileScreen = () => {
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
-
     try {
       const sodium = calculateRecommendedSodium(profile);
       const updatedProfile = { ...profile, recommendedSodium: sodium };
@@ -207,11 +206,11 @@ const ProfileScreen = () => {
                   style={styles.picker}
                   accessibilityLabel="เลือกระยะของโรคไต"
                 >
-                  <Picker.Item label="ระยะที่ 1" value="1" />
-                  <Picker.Item label="ระยะที่ 2" value="2" />
-                  <Picker.Item label="ระยะที่ 3" value="3" />
-                  <Picker.Item label="ระยะที่ 4" value="4" />
-                  <Picker.Item label="ระยะที่ 5" value="5" />
+                  <Picker.Item label="ระยะที่ 1 (eGFR > 90%) " value="1" />
+                  <Picker.Item label="ระยะที่ 2 (eGFR 60-89%)" value="2" />
+                  <Picker.Item label="ระยะที่ 3 (eGFR 30-60%)" value="3" />
+                  <Picker.Item label="ระยะที่ 4 (eGFR < 30%)" value="4" />
+                  <Picker.Item label="ระยะที่ 5 (eGFR < 15%)" value="5" />
                   <Picker.Item label="ระยะที่ 5 (ล้างไต)" value="5D" />
                 </Picker>
               </View>

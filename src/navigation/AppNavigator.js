@@ -12,14 +12,12 @@ const Tab = createBottomTabNavigator();
 
 export default function AppNavigator() {
   return (
-    // ครอบทั้งหมดเพื่อเปิดระบบ navigation
     <NavigationContainer>
-      <Tab.Navigator //ใช้แสดงเมนูแถบล่างแบบแท็บ
+      <Tab.Navigator
         screenOptions={({ route }) => ({
           tabBarIcon: ({ focused, color, size }) => {
             let iconName;
-
-            if (route.name === 'โปรไฟล์') { //ดึงชื่อมาจาก Tab.screen
+            if (route.name === 'โปรไฟล์') {
               iconName = focused ? 'person' : 'person-outline';
             } else if (route.name === 'เมนูอาหาร') {
               iconName = focused ? 'restaurant' : 'restaurant-outline';
@@ -39,11 +37,11 @@ export default function AppNavigator() {
           headerTitleStyle: styles.headerTitle,
         })}
       >
-        <Tab.Screen // Tab.Screen มี 4 อันสำหรับแต่ละหน้าในแอป
+        <Tab.Screen
           name="โปรไฟล์" 
           component={ProfileScreen} 
           options={{
-            title: "โปรไฟล์ผู้ใช้" //แถบด้านบน
+            title: "โปรไฟล์ผู้ใช้"
           }}
         />
         <Tab.Screen 
